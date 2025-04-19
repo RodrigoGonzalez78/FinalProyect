@@ -13,16 +13,10 @@ class DataStore @Inject constructor(
     private val USER_ID= stringPreferencesKey("user_id")
 
     suspend fun saveUserId(userId:String ){
-        dataStore.edit { preferences ->
-            preferences[USER_ID] = userId
-        }
+
     }
 
-    suspend fun getUserId(): Flow<String?> {
-        return dataStore.data.map { preferences ->
-            preferences[USER_ID]
-        }
-    }
+
 
 
 }

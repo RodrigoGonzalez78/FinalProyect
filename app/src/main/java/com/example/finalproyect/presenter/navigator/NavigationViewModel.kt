@@ -9,18 +9,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NavigationViewModel @Inject constructor(
-    private val dataStoreRepository: DataStoreRepository
-) : ViewModel() {
+class NavigationViewModel @Inject constructor() : ViewModel() {
 
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
-
-    init {
-        viewModelScope.launch {
-            dataStoreRepository.getJwt().collect { token ->
-                _isAuthenticated.value = Utils.isJwtValid(token)
-            }
-        }
-    }
 }

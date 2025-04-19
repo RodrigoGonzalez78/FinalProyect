@@ -12,10 +12,7 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(
-    private val apiService: ApiService,
-    private  val dataStore: DataStoreRepository
-) : ViewModel() {
+class LoginViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()

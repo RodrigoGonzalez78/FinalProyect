@@ -10,11 +10,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.finalproyect.presenter.login.LoginScreen
+import com.example.finalproyect.presenter.register.RegisterScreen
 
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Home : Screen("home")
-    data object Signup : Screen("signup")
+    data object Register : Screen("signup")
     data object Login : Screen("login")
     data object NewTweet : Screen("mew_tweet")
     data object EditProfile : Screen("edit_profile")
@@ -42,5 +43,9 @@ fun AppNavHost(
             LoginScreen(navController)
         }
 
+
+        composable(Screen.Register.route) {
+            RegisterScreen(navController)
+        }
     }
 }
