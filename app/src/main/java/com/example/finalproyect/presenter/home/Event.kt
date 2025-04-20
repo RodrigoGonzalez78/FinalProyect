@@ -14,11 +14,10 @@ data class Event(
     val createdAt: Date = Date(),
     val updatedAt: Date = Date(),
     val deletedAt: Date? = null,
-    // Campo adicional para mostrar el nombre de la ubicación
     val locationName: String? = null
 )
 
-// Datos de ejemplo para la aplicación
+
 val sampleEvents = listOf(
     Event(
         idEvent = 1,

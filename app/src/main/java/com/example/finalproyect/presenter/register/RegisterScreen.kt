@@ -58,7 +58,7 @@ import java.time.format.DateTimeFormatter
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = hiltViewModel() ) {
+fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = hiltViewModel()) {
 
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -85,7 +85,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Name field
+
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = { viewModel.onNameChange(it) },
@@ -107,7 +107,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Last Name field
+
             OutlinedTextField(
                 value = uiState.lastName,
                 onValueChange = { viewModel.onLastNameChange(it) },
@@ -129,7 +129,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Birthday field
+
             OutlinedTextField(
                 value = uiState.birthday.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
                 onValueChange = { },
@@ -158,7 +158,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                 )
             }
 
-            // Date Picker Dialog
+
             if (showDatePicker) {
                 val datePickerState = rememberDatePickerState()
                 DatePickerDialog(
@@ -190,7 +190,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Email field
+
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = { viewModel.onEmailChange(it) },
@@ -235,7 +235,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Password field
+
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = { viewModel.onPasswordChange(it) },
@@ -258,7 +258,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Confirm Password field
+
             OutlinedTextField(
                 value = uiState.confirmPassword,
                 onValueChange = { viewModel.onConfirmPasswordChange(it) },
