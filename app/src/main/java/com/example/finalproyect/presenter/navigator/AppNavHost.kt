@@ -1,5 +1,7 @@
 package com.example.finalproyect.presenter.navigator
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -9,6 +11,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.finalproyect.presenter.home.HomeScreen
 import com.example.finalproyect.presenter.login.LoginScreen
 import com.example.finalproyect.presenter.register.RegisterScreen
 
@@ -24,6 +27,7 @@ sealed class Screen(val route: String) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
@@ -46,6 +50,10 @@ fun AppNavHost(
 
         composable(Screen.Register.route) {
             RegisterScreen(navController)
+        }
+
+        composable(Screen.Home.route) {
+           HomeScreen()
         }
     }
 }

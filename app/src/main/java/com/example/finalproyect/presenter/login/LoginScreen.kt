@@ -102,7 +102,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = viewModel::validateFields,
+                onClick = { navController.navigate(Screen.Home.route) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
