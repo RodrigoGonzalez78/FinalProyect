@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.finalproyect.presenter.home.HomeScreen
 import com.example.finalproyect.presenter.login.LoginScreen
+import com.example.finalproyect.presenter.new_event.NewEventScreen
 import com.example.finalproyect.presenter.register.RegisterScreen
 
 sealed class Screen(val route: String) {
@@ -20,7 +21,7 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Register : Screen("signup")
     data object Login : Screen("login")
-    data object NewTweet : Screen("mew_tweet")
+    data object NewEvent : Screen("mew_event")
     data object EditProfile : Screen("edit_profile")
     data object UsersProfiles : Screen("users_profiles?userId={userId}") {
         fun createRoute(userId: String) = "users_profiles?userId=$userId"
@@ -51,9 +52,14 @@ fun AppNavHost(
         composable(Screen.Register.route) {
             RegisterScreen(navController)
         }
+        composable(Screen.NewEvent.route) {
+            NewEventScreen(
+                navController
+            )
+        }
 
         composable(Screen.Home.route) {
-           HomeScreen()
+            HomeScreen(navController)
         }
     }
 }
