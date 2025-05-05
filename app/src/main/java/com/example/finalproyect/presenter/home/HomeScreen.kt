@@ -84,7 +84,7 @@ fun HomeScreen(navController: NavHostController) {
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
             items(sampleEvents) { event ->
-                EventItem(event = event)
+                EventItem(event = event,navController)
             }
         }
     }
@@ -92,14 +92,14 @@ fun HomeScreen(navController: NavHostController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventItem(event: Event) {
+fun EventItem(event: Event,navController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
-        onClick = { /* TODO: Navegar al detalle del evento */ }
+        onClick = { navController.navigate(Screen.EventDetails.route) }
     ) {
         Box(
             modifier = Modifier
