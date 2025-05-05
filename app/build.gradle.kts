@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(libs.hilt.android)
+    implementation(libs.androidx.compose.material)
     ksp(libs.hilt.compiler)
     implementation(libs.coil.compose)
     implementation ("androidx.compose.material:material-icons-extended:1.7.8")

@@ -26,73 +26,77 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Mis Eventos", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Person,
-                            contentDescription = "Perfil",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+fun HomeScreen(
+    navController: NavHostController,
+    onNavigationItemSelected: (String) -> Unit = {}, // Nuevo parámetro
+    activeTab: String = "events") {
+            Scaffold (
+            topBar = {
+                TopAppBar(
+                    title = { Text("Mis Eventos", fontWeight = FontWeight.Bold) },
+                    actions = {
+                        IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Person,
+                                contentDescription = "Perfil",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.NewEvent.route) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Agregar evento")
-            }
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
-                tonalElevation = 0.dp
-            ) {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { /* TODO: Navegar a eventos */ },
-                    icon = { Icon(Icons.Outlined.DateRange, contentDescription = "Eventos") },
-                    label = { Text("Eventos") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { /* TODO: Navegar a lugares */ },
-                    icon = { Icon(Icons.Outlined.Search, contentDescription = "Lugares") },
-                    label = { Text("Buscar") }
-                )
-
-            }
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            },
+    floatingActionButton = {
+        FloatingActionButton(
+            onClick = { navController.navigate(Screen.NewEvent.route) },
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            items(sampleEvents) { event ->
-                EventItem(event = event,navController)
-            }
+            Icon(Icons.Filled.Add, contentDescription = "Agregar evento")
+        }
+    },
+    bottomBar = {
+        NavigationBar(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
+            tonalElevation = 0.dp
+        ) {
+            NavigationBarItem(
+                selected = activeTab == "events",
+                onClick = {  },
+                icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
+                label = { Text("Eventos") }
+            )
+            NavigationBarItem(
+                selected = activeTab == "search",
+                onClick = {  },
+                icon = { Icon(Icons.Outlined.Search, contentDescription = "Buscar") }, // Cambio de icono
+                label = { Text("Buscar") }
+            )
+
         }
     }
+) {
+    paddingValues ->
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        items(sampleEvents) { event ->
+            EventItem(event = event, navController)
+        }
+    }
+}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventItem(event: Event,navController: NavHostController) {
+fun EventItem(event: Event, navController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
