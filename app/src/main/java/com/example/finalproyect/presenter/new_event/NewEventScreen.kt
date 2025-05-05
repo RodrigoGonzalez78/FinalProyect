@@ -30,13 +30,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.finalproyect.presenter.navigator.Screen
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewEventScreen(
-    onNavigateBack: NavHostController,
+    navController: NavHostController,
 ) {
     val context = LocalContext.current
 
@@ -76,7 +77,7 @@ fun NewEventScreen(
             TopAppBar(
                 title = { Text("Crear Nuevo Evento") },
                 navigationIcon = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {navController.navigate(Screen.Home.route)}) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver"

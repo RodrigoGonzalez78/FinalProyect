@@ -27,7 +27,7 @@ val sampleEvents = listOf(
         }.time,
         name = "Concierto de Jazz Nocturno",
         description = "Una noche de jazz con los mejores músicos de la ciudad. Disfruta de bebidas y buena música en un ambiente íntimo.",
-        banner = "https://via.placeholder.com/400x200",
+        banner = "https://estaticosgn-cdn.deia.eus/clip/3ba45dff-d1fc-48dd-a12e-c1aa0cf4cfc1_16-9-aspect-ratio_default_0.jpg",
         guestsNumber = 120,
         locationName = "Club Blue Note"
     ),
@@ -39,7 +39,7 @@ val sampleEvents = listOf(
         }.time,
         name = "Festival de Cine Independiente",
         description = "Proyección de cortometrajes y películas independientes con sesión de preguntas y respuestas con los directores.",
-        banner = "https://via.placeholder.com/400x200",
+        banner = "https://i.ytimg.com/vi/753NbR_U3m4/maxresdefault.jpg",
         guestsNumber = 85,
         locationName = "Teatro Lumière"
     ),
@@ -51,7 +51,7 @@ val sampleEvents = listOf(
         }.time,
         name = "Exposición de Arte Digital",
         description = "Muestra de arte digital interactivo con obras de artistas emergentes y establecidos.",
-        banner = "https://via.placeholder.com/400x200",
+        banner = "https://img.lalr.co/cms/2022/03/31124833/COLP_EXT_106936_553dc-1.jpg?size=xl",
         guestsNumber = 150,
         locationName = "Galería Nova"
     )

@@ -32,7 +32,7 @@ fun HomeScreen(navController: NavHostController) {
             TopAppBar(
                 title = { Text("Mis Eventos", fontWeight = FontWeight.Bold) },
                 actions = {
-                    IconButton(onClick = { /* TODO: Perfil de usuario */ }) {
+                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
                         Icon(
                             imageVector = Icons.Outlined.Person,
                             contentDescription = "Perfil",
@@ -68,15 +68,10 @@ fun HomeScreen(navController: NavHostController) {
                 NavigationBarItem(
                     selected = false,
                     onClick = { /* TODO: Navegar a lugares */ },
-                    icon = { Icon(Icons.Outlined.LocationOn, contentDescription = "Lugares") },
-                    label = { Text("Lugares") }
+                    icon = { Icon(Icons.Outlined.Search, contentDescription = "Lugares") },
+                    label = { Text("Buscar") }
                 )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { /* TODO: Navegar a notificaciones */ },
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notificaciones") },
-                    label = { Text("Notificaciones") }
-                )
+
             }
         }
     ) { paddingValues ->
