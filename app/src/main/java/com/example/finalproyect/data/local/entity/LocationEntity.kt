@@ -2,17 +2,15 @@ package com.example.finalproyect.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDate
 import java.time.LocalDateTime
 
-@Entity(tableName = "users")
-data class UserEntity(
+@Entity(tableName = "locations")
+data class LocationEntity(
     @PrimaryKey val id: Long,
     val name: String,
-    val lastName: String,
-    val birthday: LocalDate,
-    val email: String,
-    val phone: String,
+    val direction: String,
+    val latitude: Double,
+    val longitude: Double,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

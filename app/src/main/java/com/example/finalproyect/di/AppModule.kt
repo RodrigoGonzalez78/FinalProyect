@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.example.finalproyect.data.local.dao.UserDao
-import com.example.finalproyect.data.local.db.AppDatabase
+import com.example.finalproyect.data.local.database.AppDatabase
 import com.example.finalproyect.data.remote.ApiService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -18,7 +18,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.create
 import javax.inject.Singleton
 
 @Module

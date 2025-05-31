@@ -1,15 +1,15 @@
 package com.example.finalproyect.domain.model
 
-import java.time.LocalDate
 import java.time.LocalDateTime
 
-data class User(
+data class TicketType(
     val id: Long,
+    val eventId: Long,
     val name: String,
-    val lastName: String,
-    val birthday: LocalDate,
-    val email: String,
-    val phone: String,
+    val description: String,
+    val available: Int,
+    val sold: Int,
+    val price: Double,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

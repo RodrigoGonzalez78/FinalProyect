@@ -1,21 +1,9 @@
 package com.example.finalproyect.presenter.home
 
 
+import com.example.finalproyect.domain.model.Event
 import java.util.*
 
-data class Event(
-    val idEvent: Long,
-    val idLocation: Long,
-    val date: Date,
-    val name: String,
-    val description: String? = null,
-    val banner: String? = null,
-    val guestsNumber: Int = 0,
-    val createdAt: Date = Date(),
-    val updatedAt: Date = Date(),
-    val deletedAt: Date? = null,
-    val locationName: String? = null
-)
 
 
 val sampleEvents = listOf(
