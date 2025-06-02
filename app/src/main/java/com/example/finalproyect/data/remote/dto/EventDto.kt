@@ -13,4 +13,5 @@ data class EventDto(
     @SerializedName("banner") val banner: String?,
     @SerializedName("is_public") val isPublic: Boolean,
     @SerializedName("created_at") val createdAt: String, // ISO format
+    @SerializedName("updated_at") val updatedAt: String, // ISO format
 )

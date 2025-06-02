@@ -12,6 +12,6 @@ data class UserDto(
     @SerializedName("password") val password: String?,
     @SerializedName("email") val email: String,
     @SerializedName("phone") val phone: String,
+    @SerializedName("created_at") val createdAt: String, // ISO format
     @SerializedName("updated_at") val updatedAt: String, // ISO format
-    @SerializedName("deleted_at") val deletedAt: String? // ISO format
 )

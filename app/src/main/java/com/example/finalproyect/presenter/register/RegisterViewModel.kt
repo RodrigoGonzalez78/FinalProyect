@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.finalproyect.domain.usecase.auth.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,14 +16,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class RegisterViewModel @Inject constructor() : ViewModel() {
-
+class RegisterViewModel @Inject constructor(
+    private val registerUseCase: RegisterUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignupUiState())
-    @RequiresApi(Build.VERSION_CODES.O)
     val uiState: StateFlow<SignupUiState> = _uiState.asStateFlow()
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun clearFields() {
         _uiState.update {
             it.copy(
@@ -69,34 +69,18 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(birthday = newBirthday, birthdayError = "") }
     }
 
-
-    @RequiresApi(Build.VERSION_CODES.O)
     fun validateAndRegister() {
         val currentState = _uiState.value
 
-        // Create a new state with all validation errors
         val errors = SignupUiState(
             nameError = if (currentState.name.isBlank()) "El nombre es obligatorio" else "",
-
             lastNameError = if (currentState.lastName.isBlank()) "El apellido es obligatorio" else "",
-
-            emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentState.email)
-                    .matches()
-            ) "Formato de email inválido" else "",
-
-            passwordError = if (currentState.password.length < 6)
-                "La contraseña debe tener al menos 6 caracteres" else "",
-
-            confirmPasswordError = if (currentState.password != currentState.confirmPassword)
-                "Las contraseñas no coinciden" else "",
-
-            birthdayError = if (currentState.birthday.isAfter(LocalDate.now().minusYears(18)))
-                "Debes ser mayor de 18 años" else "",
-
-            phoneError = if (currentState.phone.isNotBlank() && !isPhoneValid(currentState.phone))
-                "Formato de teléfono inválido" else ""
+            emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentState.email).matches()) "Formato de email inválido" else "",
+            passwordError = if (currentState.password.length < 6) "La contraseña debe tener al menos 6 caracteres" else "",
+            confirmPasswordError = if (currentState.password != currentState.confirmPassword) "Las contraseñas no coinciden" else "",
+            birthdayError = if (currentState.birthday.isAfter(LocalDate.now().minusYears(18))) "Debes ser mayor de 18 años" else "",
+            phoneError = if (currentState.phone.isNotBlank() && !isPhoneValid(currentState.phone)) "Formato de teléfono inválido" else ""
         )
-
 
         _uiState.update {
             it.copy(
@@ -110,15 +94,12 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
             )
         }
 
-
         if (errors.hasErrors()) return
-
 
         register()
     }
 
     private fun isPhoneValid(phone: String): Boolean {
-
         val phonePattern = "^[+]?[0-9]{8,15}$".toRegex()
         return phone.matches(phonePattern)
     }
@@ -126,27 +107,46 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
     private fun register() {
         viewModelScope.launch {
             val currentState = _uiState.value
-
             _uiState.update { it.copy(isLoading = true, message = "") }
 
             try {
+                val result = registerUseCase(
+                    name = currentState.name,
+                    lastName = currentState.lastName,
+                    email = currentState.email,
+                    password = currentState.password,
+                    birthday = currentState.birthday.toString(),
+                    phone = currentState.phone
+                )
 
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        notification = true,
-                        message = "Registro exitoso"
-                    )
-                }
-
-                clearFields()
+                result.fold(
+                    onSuccess = {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                notification = true,
+                                message = "Registro exitoso"
+                            )
+                        }
+                        clearFields()
+                    },
+                    onFailure = { exception ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                notification = true,
+                                message = exception.message ?: "Error desconocido"
+                            )
+                        }
+                    }
+                )
 
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         notification = true,
-                        message = "${e.message}"
+                        message = e.message ?: "Error desconocido"
                     )
                 }
             }

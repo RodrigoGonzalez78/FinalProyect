@@ -71,6 +71,8 @@ dependencies {
 
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.androidx.hilt.compiler)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     implementation(libs.androidx.datastore.preferences)
 

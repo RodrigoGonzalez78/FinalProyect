@@ -9,5 +9,4 @@ data class OrganizerDto(
     @SerializedName("id_user") val idUser: Long,
     @SerializedName("created_at") val createdAt: String, // ISO format
     @SerializedName("updated_at") val updatedAt: String, // ISO format
-    @SerializedName("deleted_at") val deletedAt: String? // ISO format
 )

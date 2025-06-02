@@ -1,8 +1,12 @@
 package com.example.finalproyect.data.repository
 
-
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.finalproyect.data.local.dao.EventDao
 import com.example.finalproyect.data.local.dao.LocationDao
+import com.example.finalproyect.data.mappers.toEvent
+import com.example.finalproyect.data.mappers.toEventEntity
+import com.example.finalproyect.data.mappers.toLocationEntity
 import com.example.finalproyect.data.remote.api.EventApi
 import com.example.finalproyect.data.remote.dto.request.CreateEventRequest
 import com.example.finalproyect.data.remote.dto.request.EventRequest
@@ -10,6 +14,7 @@ import com.example.finalproyect.data.remote.dto.request.LocationRequest
 import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.domain.repository.EventRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -29,6 +34,7 @@ class EventRepositoryImpl @Inject constructor(
         return eventDao.getEventById(eventId).map { it?.toEvent() }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createEvent(
         name: String,
         description: String,
@@ -72,7 +78,7 @@ class EventRepositoryImpl @Inject constructor(
 
             // Obtener el evento con su ubicación
             val eventWithLocation = eventDao.getEventById(response.idEvent).map { it?.toEvent() }
-            Result.success(eventWithLocation.value ?: throw Exception("Error al obtener el evento creado"))
+            Result.success(eventWithLocation.firstOrNull() ?: throw Exception("Error al obtener el evento creado"))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -82,7 +88,7 @@ class EventRepositoryImpl @Inject constructor(
         return try {
             eventApi.deleteEvent(eventId)
             // También eliminar de la base de datos local
-            val event = eventDao.getEventById(eventId).value?.event
+            val event = eventDao.getEventById(eventId).firstOrNull()?.event
             event?.let { eventDao.deleteEvent(it) }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -90,6 +96,7 @@ class EventRepositoryImpl @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun refreshEvents(): Result<Unit> {
         return try {
             val remoteEvents = eventApi.getAllEvents()
@@ -109,3 +116,4 @@ class EventRepositoryImpl @Inject constructor(
         }
     }
 }
+

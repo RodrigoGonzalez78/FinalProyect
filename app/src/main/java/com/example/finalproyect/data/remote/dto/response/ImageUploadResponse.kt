@@ -1,5 +1,7 @@
 package com.example.finalproyect.data.remote.dto.response
 
+import com.google.gson.annotations.SerializedName
+
 data class ImageUploadResponse(
-    @Json(name = "filename") val filename: String
+    @SerializedName("filename") val filename: String
 )

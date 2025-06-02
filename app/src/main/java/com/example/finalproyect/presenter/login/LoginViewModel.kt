@@ -2,6 +2,7 @@ package com.example.finalproyect.presenter.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.finalproyect.domain.usecase.auth.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,9 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor() : ViewModel() {
+class LoginViewModel @Inject constructor(
+    private val loginUseCase: LoginUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
@@ -23,7 +26,6 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
     fun onPasswordChange(password: String) {
         _uiState.update { it.copy(password = password) }
-
     }
 
     fun changeNotificationState(newState: Boolean) {
@@ -33,8 +35,8 @@ class LoginViewModel @Inject constructor() : ViewModel() {
     fun validateFields() {
         val currentState = _uiState.value
         val errors = LoginUiState(
-            emailError = if (currentState.email == "") "Complete el campo por favor" else "",
-            passwordError = if (currentState.password == "") "Complete el campo por favor" else ""
+            emailError = if (currentState.email.isBlank()) "Complete el campo por favor" else "",
+            passwordError = if (currentState.password.isBlank()) "Complete el campo por favor" else ""
         )
         _uiState.update {
             it.copy(
@@ -45,29 +47,34 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
         if (errors.hasErrors()) return
 
-        loginClick()
+        loginClick(currentState.email, currentState.password)
     }
 
-    private fun loginClick() {
+    private fun loginClick(email: String, password: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
 
-            try {
+            val result = loginUseCase(email, password)
 
-
-            } catch (e: HttpException) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    notification = true,
-                    message = "Error de inicio de sesión"
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    notification = true,
-                    message = "Error de inicio de sesión"
-                )
-            }
+            result
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            notification = true,
+                            message = "Inicio de sesión exitoso"
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            notification = true,
+                            message = e.message ?: "Error de inicio de sesión"
+                        )
+                    }
+                }
         }
     }
 }
