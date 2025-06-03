@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.presenter.navigator.Screen
@@ -48,7 +49,7 @@ import java.util.*
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
-    viewModel: ProfileViewModel
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
 
@@ -60,7 +61,7 @@ fun ProfileScreen(
     LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-           // viewModel.clearMessages()
+            // viewModel.clearMessages()
         }
         uiState.successMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -309,7 +310,8 @@ fun ProfileScreen(
                                 contentDescription = null
                             )
                         },
-                        isError = !android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()
+                        isError = !android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email)
+                            .matches()
                     )
                     if (!android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
                         Text(
@@ -531,7 +533,11 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.onChangePasswordConfirm(currentPassword, newPassword, confirmPassword)
+                        viewModel.onChangePasswordConfirm(
+                            currentPassword,
+                            newPassword,
+                            confirmPassword
+                        )
                     },
                     enabled = currentPassword.isNotBlank()
                             && newPassword.isNotBlank()

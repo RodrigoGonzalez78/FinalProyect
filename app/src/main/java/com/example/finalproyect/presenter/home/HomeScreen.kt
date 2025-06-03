@@ -1,5 +1,7 @@
 package com.example.finalproyect.presenter.home
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,8 +25,10 @@ import coil.compose.AsyncImage
 import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.presenter.navigator.Screen
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -95,6 +99,7 @@ fun HomeScreen(
 }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventItem(event: Event, navController: NavHostController) {
@@ -206,7 +211,7 @@ fun EventItem(event: Event, navController: NavHostController) {
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
                     Text(
-                        text = "${event.guestsNumber} invitados",
+                        text = "${0} invitados",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -217,7 +222,7 @@ fun EventItem(event: Event, navController: NavHostController) {
 }
 
 @Composable
-fun formatDate(date: Date): String {
+fun formatDate(date: LocalDate): String {
     val formatter = SimpleDateFormat("d MMM · HH:mm", Locale("es", "ES"))
     return formatter.format(date)
 }

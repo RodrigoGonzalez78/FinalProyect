@@ -2,8 +2,10 @@ package com.example.finalproyect.presenter.new_event
 
 
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
@@ -28,60 +31,65 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.presenter.navigator.Screen
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewEventScreen(
     navController: NavHostController,
+    viewModel: NewEventViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Estados para los campos del formulariopackage com.example.eventosapp.data
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var selectedLocation by remember { mutableStateOf<Location?>(null) }
-    var selectedDate by remember { mutableStateOf(Calendar.getInstance()) }
-    var startTime by remember { mutableStateOf(Calendar.getInstance()) }
-    var endTime by remember { mutableStateOf(Calendar.getInstance().apply { add(Calendar.HOUR, 2) }) }
-    var isPublic by remember { mutableStateOf(true) }
-    var isFree by remember { mutableStateOf(true) }
-    var maxGuests by remember { mutableStateOf("100") }
-    var bannerUri by remember { mutableStateOf<Uri?>(null) }
+    // Snackbar host
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
+        }
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
+        }
+    }
 
-    // Estados para diálogos
+    // Dialog flags
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
     var showLocationPicker by remember { mutableStateOf(false) }
 
-    // Lanzador para seleccionar imagen
+    // Launchers
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        bannerUri = uri
+        viewModel.onBannerUriChange(uri)
     }
 
-    // Validación de formulario
-    val isFormValid = name.isNotBlank() &&
-            description.isNotBlank() &&
-            selectedLocation != null &&
-            maxGuests.toIntOrNull() != null
-
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Crear Nuevo Evento") },
                 navigationIcon = {
-                    IconButton(onClick = {navController.navigate(Screen.Home.route)}) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                    IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.createEvent() }) {
+                        Icon(Icons.Default.Check, contentDescription = "Guardar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -98,7 +106,7 @@ fun NewEventScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Banner Image Selector
+            // Banner
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,9 +121,9 @@ fun NewEventScreen(
                     .clickable { imagePickerLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
-                if (bannerUri != null) {
+                if (uiState.bannerUri != null) {
                     AsyncImage(
-                        model = bannerUri,
+                        model = uiState.bannerUri,
                         contentDescription = "Banner del evento",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -140,30 +148,53 @@ fun NewEventScreen(
                     }
                 }
             }
+            if (uiState.bannerUri == null) {
+                Text(
+                    text = "El banner es obligatorio",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
-            // Nombre del evento
+            // Nombre
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = uiState.name,
+                onValueChange = { viewModel.onNameChange(it) },
                 label = { Text("Nombre del evento") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                isError = uiState.name.isBlank()
             )
+            if (uiState.name.isBlank()) {
+                Text(
+                    text = "El nombre es obligatorio",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             // Descripción
             OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
+                value = uiState.description,
+                onValueChange = { viewModel.onDescriptionChange(it) },
                 label = { Text("Descripción") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
-                maxLines = 5
+                maxLines = 5,
+                isError = uiState.description.isBlank()
             )
+            if (uiState.description.isBlank()) {
+                Text(
+                    text = "La descripción es obligatoria",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             // Ubicación
             OutlinedTextField(
-                value = selectedLocation?.name ?: "",
+                value = uiState.selectedLocation?.name.orEmpty(),
                 onValueChange = { },
                 label = { Text("Ubicación") },
                 modifier = Modifier.fillMaxWidth(),
@@ -175,39 +206,41 @@ fun NewEventScreen(
                             contentDescription = "Seleccionar ubicación"
                         )
                     }
-                }
+                },
+                isError = uiState.selectedLocation == null
             )
-
-            // Fecha y hora
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Fecha
-                OutlinedTextField(
-                    value = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(selectedDate.time),
-                    onValueChange = { },
-                    label = { Text("Fecha") },
-                    modifier = Modifier.weight(1f),
-                    readOnly = true,
-                    trailingIcon = {
-                        IconButton(onClick = { showDatePicker = true }) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = "Seleccionar fecha"
-                            )
-                        }
-                    }
+            if (uiState.selectedLocation == null) {
+                Text(
+                    text = "Debe seleccionar una ubicación",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
+            // Fecha
+            OutlinedTextField(
+                value = uiState.selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                onValueChange = { },
+                label = { Text("Fecha") },
+                modifier = Modifier.fillMaxWidth(),
+                readOnly = true,
+                trailingIcon = {
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Seleccionar fecha"
+                        )
+                    }
+                }
+            )
+
+            // Hora inicio / fin
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Hora de inicio
                 OutlinedTextField(
-                    value = SimpleDateFormat("HH:mm", Locale.getDefault()).format(startTime.time),
+                    value = uiState.startTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")),
                     onValueChange = { },
                     label = { Text("Hora inicio") },
                     modifier = Modifier.weight(1f),
@@ -221,10 +254,8 @@ fun NewEventScreen(
                         }
                     }
                 )
-
-                // Hora de fin
                 OutlinedTextField(
-                    value = SimpleDateFormat("HH:mm", Locale.getDefault()).format(endTime.time),
+                    value = uiState.endTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")),
                     onValueChange = { },
                     label = { Text("Hora fin") },
                     modifier = Modifier.weight(1f),
@@ -239,53 +270,61 @@ fun NewEventScreen(
                     }
                 )
             }
+            if (uiState.startTime >= uiState.endTime) {
+                Text(
+                    text = "La hora de inicio debe ser anterior a la hora de fin",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
-            // Opciones de evento
+            // Switches público / gratuito
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Evento público",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text(text = "Evento público", style = MaterialTheme.typography.bodyLarge)
                 Switch(
-                    checked = isPublic,
-                    onCheckedChange = { isPublic = it }
+                    checked = uiState.isPublic,
+                    onCheckedChange = { viewModel.onIsPublicChange(it) }
                 )
             }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Evento gratuito",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text(text = "Evento gratuito", style = MaterialTheme.typography.bodyLarge)
                 Switch(
-                    checked = isFree,
-                    onCheckedChange = { isFree = it }
+                    checked = uiState.isFree,
+                    onCheckedChange = { viewModel.onIsFreeChange(it) }
                 )
             }
 
-            // Número máximo de invitados
+            // Máximo invitados
             OutlinedTextField(
-                value = maxGuests,
+                value = uiState.maxGuests,
                 onValueChange = {
                     if (it.isEmpty() || it.toIntOrNull() != null) {
-                        maxGuests = it
+                        viewModel.onMaxGuestsChange(it)
                     }
                 },
                 label = { Text("Máximo de invitados") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true
+                singleLine = true,
+                isError = uiState.maxGuests.isNotEmpty() && uiState.maxGuests.toIntOrNull() == null
             )
+            if (uiState.maxGuests.isNotEmpty() && uiState.maxGuests.toIntOrNull() == null) {
+                Text(
+                    text = "Ingresa un número válido",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
-            // Botones de acción
+            // Botones Cancelar / Guardar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -293,37 +332,49 @@ fun NewEventScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = {},
+                    onClick = { navController.navigate(Screen.Home.route) },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Cancelar")
                 }
-
                 Button(
-                    onClick = {
-
-                    },
+                    onClick = { viewModel.createEvent() },
                     modifier = Modifier.weight(1f),
-                    enabled = isFormValid
+                    enabled = uiState.isFormValid() && uiState.bannerUri != null
                 ) {
                     Text("Guardar")
+                }
+            }
+
+            // Loading indicator
+            if (uiState.isLoading) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    CircularProgressIndicator()
                 }
             }
         }
     }
 
-    // Date Picker Dialog
+    // DatePickerDialog
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.timeInMillis
+            initialSelectedDateMillis = uiState.selectedDate
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
         )
-
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let {
-                        selectedDate.timeInMillis = it
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val localDate = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        viewModel.onDateChange(localDate)
                     }
                     showDatePicker = false
                 }) {
@@ -340,18 +391,19 @@ fun NewEventScreen(
         }
     }
 
-    // Time Picker Dialogs
+    // TimePickerDialog para Hora de Inicio
     if (showStartTimePicker) {
+        val initialHour = uiState.startTime.hour
+        val initialMinute = uiState.startTime.minute
         val timePickerState = rememberTimePickerState(
-            initialHour = startTime.get(Calendar.HOUR_OF_DAY),
-            initialMinute = startTime.get(Calendar.MINUTE)
+            initialHour = initialHour,
+            initialMinute = initialMinute
         )
-
         TimePickerDialog(
             onDismissRequest = { showStartTimePicker = false },
             onConfirm = {
-                startTime.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                startTime.set(Calendar.MINUTE, timePickerState.minute)
+                val newStart = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                viewModel.onStartTimeChange(newStart)
                 showStartTimePicker = false
             }
         ) {
@@ -359,17 +411,19 @@ fun NewEventScreen(
         }
     }
 
+    // TimePickerDialog para Hora de Fin
     if (showEndTimePicker) {
+        val initialHour = uiState.endTime.hour
+        val initialMinute = uiState.endTime.minute
         val timePickerState = rememberTimePickerState(
-            initialHour = endTime.get(Calendar.HOUR_OF_DAY),
-            initialMinute = endTime.get(Calendar.MINUTE)
+            initialHour = initialHour,
+            initialMinute = initialMinute
         )
-
         TimePickerDialog(
             onDismissRequest = { showEndTimePicker = false },
             onConfirm = {
-                endTime.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                endTime.set(Calendar.MINUTE, timePickerState.minute)
+                val newEnd = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                viewModel.onEndTimeChange(newEnd)
                 showEndTimePicker = false
             }
         ) {
@@ -377,13 +431,13 @@ fun NewEventScreen(
         }
     }
 
-    // Location Picker Dialog
+    // LocationPickerDialog
     if (showLocationPicker) {
         LocationPickerDialog(
-            locations = sampleLocations,
+            locations = sampleLocations, // lista de locations disponible en tu repositorio o mock
             onDismissRequest = { showLocationPicker = false },
             onLocationSelected = { location ->
-                selectedLocation = location
+                viewModel.onLocationSelected(location)
                 showLocationPicker = false
             }
         )
@@ -429,10 +483,7 @@ fun LocationPickerDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 locations.forEach { location ->
-                    LocationItem(
-                        location = location,
-                        onClick = { onLocationSelected(location) }
-                    )
+                    LocationItem(location = location, onClick = { onLocationSelected(location) })
                 }
             }
         },
@@ -481,3 +532,10 @@ fun LocationItem(
         }
     }
 }
+
+
+val sampleLocations = listOf(
+    Location("Centro Cultural", "Av. Principal 123", -27.467, -58.830),
+    Location("Parque Central", "Calle Falsa 456", -27.470, -58.825),
+    Location("Auditorio Municipal", "Av. Libertad 789", -27.471, -58.828)
+)
