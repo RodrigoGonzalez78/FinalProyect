@@ -10,6 +10,4 @@ data class User(
     val birthday: LocalDate,
     val email: String,
     val phone: String,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
 )

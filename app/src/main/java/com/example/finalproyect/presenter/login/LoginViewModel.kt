@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -86,7 +85,7 @@ data class LoginUiState(
     val emailError: String = "",
     val isLoading: Boolean = false,
     val notification: Boolean = false,
-    val message: String = ""
+    val message: String = "",
 ) {
     fun hasErrors() = this.passwordError.isNotEmpty() || this.emailError.isNotEmpty()
 }

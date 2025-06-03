@@ -102,7 +102,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { navController.navigate(Screen.Home.route) },
+                onClick = { viewModel.validateFields() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -138,10 +138,12 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
 
 
         LaunchedEffect(uiState.message) {
-            if (uiState.notification) {
+
+            if (uiState.notification){
                 Toast.makeText(context, uiState.message, Toast.LENGTH_LONG).show()
                 viewModel.changeNotificationState(false)
             }
+
         }
     }
 }

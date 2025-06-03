@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.presenter.navigator.Screen
 import java.text.SimpleDateFormat
 import java.util.*

@@ -1,8 +1,10 @@
 package com.example.finalproyect.presenter.profile
 
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,94 +23,72 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.presenter.navigator.Screen
 
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
-
-data class User(
-    val idUser: Long,
-    val name: String,
-    val lastName: String,
-    val birthday: Date,
-    val password: String,
-    val email: String,
-    val phone: String,
-    val createdAt: Date = Date(),
-    val updatedAt: Date = Date(),
-    val deletedAt: Date? = null
-)
-
-// Usuario de ejemplo para la aplicación
-val sampleUser = User(
-    idUser = 1,
-    name = "Carlos",
-    lastName = "Rodríguez",
-    birthday = Calendar.getInstance().apply {
-        set(1990, 5, 15)
-    }.time,
-    password = "password123",
-    email = "carlos.rodriguez@example.com",
-    phone = "+52 555 123 4567",
-    createdAt = Date(),
-    updatedAt = Date()
-)
-
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavHostController) {
+fun ProfileScreen(
+    navController: NavHostController,
+    viewModel: ProfileViewModel
+) {
     val context = LocalContext.current
-    var user= sampleUser
-    // Estados para los campos editables
-    var name by remember { mutableStateOf(user.name) }
-    var lastName by remember { mutableStateOf(user.lastName) }
-    var email by remember { mutableStateOf(user.email) }
-    var phone by remember { mutableStateOf(user.phone) }
-    var birthday by remember { mutableStateOf(user.birthday) }
-    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Estados para el cambio de contraseña
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var showCurrentPassword by remember { mutableStateOf(false) }
-    var showNewPassword by remember { mutableStateOf(false) }
-    var showConfirmPassword by remember { mutableStateOf(false) }
+    // 1) Collectamos el estado desde el ViewModel
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Estados para diálogos
-    var showBirthdayPicker by remember { mutableStateOf(false) }
-    var showPasswordDialog by remember { mutableStateOf(false) }
-    var showDeleteAccountDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
+    // 2) Manejamos un SnackbarHost para mostrar errores/éxitos
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+           // viewModel.clearMessages()
+        }
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            //viewModel.clearMessages()
+        }
+    }
 
-    // Estado para secciones expandibles
-    var personalInfoExpanded by remember { mutableStateOf(true) }
-    var contactInfoExpanded by remember { mutableStateOf(true) }
-    var securityExpanded by remember { mutableStateOf(false) }
-
-    // Lanzador para seleccionar imagen de perfil
+    // 3) Manejamos localmente el launcher de selección de imagen
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        profileImageUri = uri
+        viewModel.onImageUriChange(uri)
     }
 
+    // 4) Control para el DatePicker
+    var showBirthdayPicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = uiState.birthday.atStartOfDay(ZoneId.systemDefault())
+            .toInstant().toEpochMilli()
+    )
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Mi Perfil") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate(Screen.Home.route)  }) {
+                    IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver"
@@ -117,15 +97,7 @@ fun ProfileScreen(navController: NavHostController) {
                 },
                 actions = {
                     IconButton(onClick = {
-                        // Guardar cambios del perfil
-                        val updatedUser = user.copy(
-                            name = name,
-                            lastName = lastName,
-                            email = email,
-                            phone = phone,
-                            birthday = birthday
-                        )
-
+                        viewModel.saveProfile()
                     }) {
                         Icon(
                             imageVector = Icons.Default.Done,
@@ -145,15 +117,12 @@ fun ProfileScreen(navController: NavHostController) {
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Header con imagen de perfil y nombre
+            // Header: foto de perfil y nombre completo
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                
-
-                // Foto de perfil
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -168,9 +137,9 @@ fun ProfileScreen(navController: NavHostController) {
                         .clickable { imagePickerLauncher.launch("image/*") },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (profileImageUri != null) {
+                    if (uiState.imageUri != null) {
                         AsyncImage(
-                            model = profileImageUri,
+                            model = uiState.imageUri,
                             contentDescription = "Foto de perfil",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -183,8 +152,7 @@ fun ProfileScreen(navController: NavHostController) {
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
-                    // Icono de cámara para cambiar foto
+                    // Icono de cámara
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -206,17 +174,18 @@ fun ProfileScreen(navController: NavHostController) {
 
             // Nombre completo centrado
             Text(
-                text = "$name $lastName",
+                text = "${uiState.name} ${uiState.lastName}",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp, bottom = 24.dp),
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
 
-            // Sección de información personal
+            // Sección: Información Personal
+            var personalInfoExpanded by remember { mutableStateOf(true) }
             ProfileSection(
                 title = "Información Personal",
                 icon = Icons.Outlined.Person,
@@ -229,10 +198,10 @@ fun ProfileScreen(navController: NavHostController) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo de nombre
+                    // Campo: Nombre
                     OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
+                        value = uiState.name,
+                        onValueChange = { viewModel.onNameChange(it) },
                         label = { Text("Nombre") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
@@ -240,13 +209,22 @@ fun ProfileScreen(navController: NavHostController) {
                                 imageVector = Icons.Outlined.Info,
                                 contentDescription = null
                             )
-                        }
+                        },
+                        isError = uiState.name.isBlank()
                     )
+                    if (uiState.name.isBlank()) {
+                        Text(
+                            text = "El nombre es obligatorio",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
 
-                    // Campo de apellido
+                    // Campo: Apellido
                     OutlinedTextField(
-                        value = lastName,
-                        onValueChange = { lastName = it },
+                        value = uiState.lastName,
+                        onValueChange = { viewModel.onLastNameChange(it) },
                         label = { Text("Apellido") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
@@ -254,12 +232,23 @@ fun ProfileScreen(navController: NavHostController) {
                                 imageVector = Icons.Outlined.Info,
                                 contentDescription = null
                             )
-                        }
+                        },
+                        isError = uiState.lastName.isBlank()
                     )
+                    if (uiState.lastName.isBlank()) {
+                        Text(
+                            text = "El apellido es obligatorio",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
 
-                    // Campo de fecha de nacimiento
+                    // Campo: Fecha de nacimiento (solo lectura + DatePicker)
                     OutlinedTextField(
-                        value = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(birthday),
+                        value = uiState.birthday.format(
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                        ),
                         onValueChange = { },
                         label = { Text("Fecha de nacimiento") },
                         modifier = Modifier.fillMaxWidth(),
@@ -277,14 +266,24 @@ fun ProfileScreen(navController: NavHostController) {
                                     contentDescription = "Seleccionar fecha"
                                 )
                             }
-                        }
+                        },
+                        isError = uiState.birthday.isAfter(LocalDate.now().minusYears(18))
                     )
+                    if (uiState.birthday.isAfter(LocalDate.now().minusYears(18))) {
+                        Text(
+                            text = "Debes ser mayor de 18 años",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Sección de información de contacto
+            // Sección: Información de Contacto
+            var contactInfoExpanded by remember { mutableStateOf(false) }
             ProfileSection(
                 title = "Información de Contacto",
                 icon = Icons.Outlined.Email,
@@ -297,10 +296,10 @@ fun ProfileScreen(navController: NavHostController) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo de email
+                    // Campo: Correo electrónico
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
+                        value = uiState.email,
+                        onValueChange = { viewModel.onEmailChange(it) },
                         label = { Text("Correo electrónico") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -309,13 +308,22 @@ fun ProfileScreen(navController: NavHostController) {
                                 imageVector = Icons.Outlined.Email,
                                 contentDescription = null
                             )
-                        }
+                        },
+                        isError = !android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()
                     )
+                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
+                        Text(
+                            text = "Formato de email inválido",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
 
-                    // Campo de teléfono
+                    // Campo: Teléfono
                     OutlinedTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
+                        value = uiState.phone,
+                        onValueChange = { viewModel.onPhoneChange(it) },
                         label = { Text("Teléfono") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -324,14 +332,26 @@ fun ProfileScreen(navController: NavHostController) {
                                 imageVector = Icons.Outlined.Phone,
                                 contentDescription = null
                             )
+                        },
+                        isError = uiState.phone.isNotBlank().let {
+                            it && !uiState.phone.matches("^[+]?[0-9]{8,15}$".toRegex())
                         }
                     )
+                    if (uiState.phone.isNotBlank() && !uiState.phone.matches("^[+]?[0-9]{8,15}$".toRegex())) {
+                        Text(
+                            text = "Formato de teléfono inválido",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Sección de seguridad
+            // Sección: Seguridad
+            var securityExpanded by remember { mutableStateOf(false) }
             ProfileSection(
                 title = "Seguridad",
                 icon = Icons.Outlined.Lock,
@@ -345,7 +365,7 @@ fun ProfileScreen(navController: NavHostController) {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
-                        onClick = { showPasswordDialog = true },
+                        onClick = { viewModel.onChangePasswordRequested() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
@@ -361,16 +381,15 @@ fun ProfileScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Opciones adicionales
+            // Opciones adicionales: cerrar sesión / eliminar cuenta
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Botón de cerrar sesión
                 OutlinedButton(
-                    onClick = { showLogoutDialog = true },
+                    onClick = { viewModel.onLogoutRequested() },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
@@ -385,9 +404,8 @@ fun ProfileScreen(navController: NavHostController) {
                     Text("Cerrar sesión")
                 }
 
-                // Botón de eliminar cuenta
                 Button(
-                    onClick = { showDeleteAccountDialog = true },
+                    onClick = { viewModel.onDeleteAccountRequested() },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
@@ -410,16 +428,15 @@ fun ProfileScreen(navController: NavHostController) {
 
     // Diálogo de selección de fecha de nacimiento
     if (showBirthdayPicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = birthday.time
-        )
-
         DatePickerDialog(
             onDismissRequest = { showBirthdayPicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let {
-                        birthday = Date(it)
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val localDate = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        viewModel.onBirthdayChange(localDate)
                     }
                     showBirthdayPicker = false
                 }) {
@@ -436,16 +453,21 @@ fun ProfileScreen(navController: NavHostController) {
         }
     }
 
-    // Diálogo de cambio de contraseña
-    if (showPasswordDialog) {
+    // Diálogo para cambiar contraseña
+    if (uiState.isChangingPassword) {
+        var currentPassword by remember { mutableStateOf("") }
+        var newPassword by remember { mutableStateOf("") }
+        var confirmPassword by remember { mutableStateOf("") }
+        var showCurrentPassword by remember { mutableStateOf(false) }
+        var showNewPassword by remember { mutableStateOf(false) }
+        var showConfirmPassword by remember { mutableStateOf(false) }
+
         AlertDialog(
-            onDismissRequest = { showPasswordDialog = false },
+            onDismissRequest = { viewModel.onPasswordDialogDismissed() },
             title = { Text("Cambiar contraseña") },
             text = {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Contraseña actual
@@ -455,12 +477,11 @@ fun ProfileScreen(navController: NavHostController) {
                         label = { Text("Contraseña actual") },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (showCurrentPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         trailingIcon = {
                             IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
                                 Icon(
                                     imageVector = if (showCurrentPassword) Icons.Default.Close else Icons.Default.Info,
-                                    contentDescription = if (showCurrentPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                                    contentDescription = null
                                 )
                             }
                         }
@@ -473,12 +494,11 @@ fun ProfileScreen(navController: NavHostController) {
                         label = { Text("Nueva contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         trailingIcon = {
                             IconButton(onClick = { showNewPassword = !showNewPassword }) {
                                 Icon(
                                     imageVector = if (showNewPassword) Icons.Default.Close else Icons.Default.Info,
-                                    contentDescription = if (showNewPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                                    contentDescription = null
                                 )
                             }
                         }
@@ -488,15 +508,14 @@ fun ProfileScreen(navController: NavHostController) {
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
-                        label = { Text("Confirmar contraseña") },
+                        label = { Text("Confirmar nueva contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         trailingIcon = {
                             IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
                                 Icon(
                                     imageVector = if (showConfirmPassword) Icons.Default.Close else Icons.Default.Info,
-                                    contentDescription = if (showConfirmPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                                    contentDescription = null
                                 )
                             }
                         },
@@ -512,19 +531,18 @@ fun ProfileScreen(navController: NavHostController) {
             confirmButton = {
                 Button(
                     onClick = {
-                        // Aquí iría la lógica para cambiar la contraseña
-                        showPasswordDialog = false
+                        viewModel.onChangePasswordConfirm(currentPassword, newPassword, confirmPassword)
                     },
-                    enabled = currentPassword.isNotEmpty() &&
-                            newPassword.isNotEmpty() &&
-                            confirmPassword.isNotEmpty() &&
-                            newPassword == confirmPassword
+                    enabled = currentPassword.isNotBlank()
+                            && newPassword.isNotBlank()
+                            && confirmPassword.isNotBlank()
+                            && newPassword == confirmPassword
                 ) {
                     Text("Cambiar")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showPasswordDialog = false }) {
+                TextButton(onClick = { viewModel.onPasswordDialogDismissed() }) {
                     Text("Cancelar")
                 }
             }
@@ -532,23 +550,18 @@ fun ProfileScreen(navController: NavHostController) {
     }
 
     // Diálogo de confirmación para cerrar sesión
-    if (showLogoutDialog) {
+    if (uiState.isLoggingOut) {
         AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
+            onDismissRequest = { viewModel.onLogoutDialogDismissed() },
             title = { Text("Cerrar sesión") },
             text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
             confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutDialog = false
-
-                    }
-                ) {
+                Button(onClick = { viewModel.performLogout() }) {
                     Text("Sí, cerrar sesión")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
+                TextButton(onClick = { viewModel.onLogoutDialogDismissed() }) {
                     Text("Cancelar")
                 }
             }
@@ -556,21 +569,18 @@ fun ProfileScreen(navController: NavHostController) {
     }
 
     // Diálogo de confirmación para eliminar cuenta
-    if (showDeleteAccountDialog) {
+    if (uiState.isDeletingAccount) {
         AlertDialog(
-            onDismissRequest = { showDeleteAccountDialog = false },
+            onDismissRequest = { viewModel.onDeleteAccountDialogDismissed() },
             title = { Text("Eliminar cuenta") },
             text = {
                 Text(
-                    "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer y perderás todos tus datos."
+                    "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer."
                 )
             },
             confirmButton = {
                 Button(
-                    onClick = {
-                        showDeleteAccountDialog = false
-
-                    },
+                    onClick = { viewModel.performDeleteAccount() },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -580,7 +590,7 @@ fun ProfileScreen(navController: NavHostController) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteAccountDialog = false }) {
+                TextButton(onClick = { viewModel.onDeleteAccountDialogDismissed() }) {
                     Text("Cancelar")
                 }
             }
@@ -588,10 +598,11 @@ fun ProfileScreen(navController: NavHostController) {
     }
 }
 
+// Reutilizamos el ProfileSection sin cambios
 @Composable
 fun ProfileSection(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     isExpanded: Boolean,
     onExpandToggle: () -> Unit,
     content: @Composable () -> Unit
@@ -604,10 +615,7 @@ fun ProfileSection(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
         tonalElevation = 1.dp
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Encabezado de la sección
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -616,9 +624,7 @@ fun ProfileSection(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
@@ -631,14 +637,12 @@ fun ProfileSection(
                         fontWeight = FontWeight.Medium
                     )
                 }
-
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                     contentDescription = if (isExpanded) "Contraer" else "Expandir"
                 )
             }
 
-            // Contenido expandible
             if (isExpanded) {
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 content()
