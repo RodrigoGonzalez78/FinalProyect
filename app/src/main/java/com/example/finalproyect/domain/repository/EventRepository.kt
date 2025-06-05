@@ -20,6 +20,20 @@ interface EventRepository {
 
     suspend fun getEventById(eventId: Int): Result<EventDetail>
 
+    suspend fun createEvent(
+        name: String,
+        description: String,
+        date: String,
+        startTime: String,
+        endTime: String,
+        banner: String,
+        isPublic: Boolean,
+        locationName: String,
+        locationDirection: String,
+        locationLatitude: Double,
+        locationLongitude: Double
+    ): Result<Event>
+
     suspend fun updateEvent(
         eventId: Int,
         name: String,

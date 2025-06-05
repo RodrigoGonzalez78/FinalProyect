@@ -12,31 +12,45 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.presenter.navigator.Screen
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
-
+// HomeScreen.kt - Composable actualizado
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    onNavigationItemSelected: (String) -> Unit = {}, // Nuevo parámetro
-    activeTab: String = "events") {
-            Scaffold (
-            topBar = {
+    viewModel: HomeViewModel = hiltViewModel(),
+    onNavigationItemSelected: (String) -> Unit = {},
+    activeTab: String = "events"
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
+
+    Scaffold(
+        topBar = {
+            if (!isSearchExpanded) {
                 TopAppBar(
                     title = { Text("Mis Eventos", fontWeight = FontWeight.Bold) },
                     actions = {
@@ -52,51 +66,294 @@ fun HomeScreen(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-            },
-    floatingActionButton = {
-        FloatingActionButton(
-            onClick = { navController.navigate(Screen.NewEvent.route) },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "Agregar evento")
+            }
+        },
+        floatingActionButton = {
+            if (!isSearchExpanded) {
+                FloatingActionButton(
+                    onClick = { navController.navigate(Screen.NewEvent.route) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Agregar evento")
+                }
+            }
+        },
+        bottomBar = {
+            if (!isSearchExpanded) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
+                    tonalElevation = 0.dp
+                ) {
+                    NavigationBarItem(
+                        selected = activeTab == "events",
+                        onClick = { onNavigationItemSelected("events") },
+                        icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
+                        label = { Text("Eventos") }
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == "search",
+                        onClick = {
+                            onNavigationItemSelected("search")
+                            viewModel.setSearchExpanded(true)
+                        },
+                        icon = { Icon(Icons.Outlined.Search, contentDescription = "Buscar") },
+                        label = { Text("Buscar") }
+                    )
+                }
+            }
         }
-    },
-    bottomBar = {
-        NavigationBar(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
-            tonalElevation = 0.dp
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            NavigationBarItem(
-                selected = activeTab == "events",
-                onClick = {  },
-                icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
-                label = { Text("Eventos") }
-            )
-            NavigationBarItem(
-                selected = activeTab == "search",
-                onClick = {  },
-                icon = { Icon(Icons.Outlined.Search, contentDescription = "Buscar") }, // Cambio de icono
-                label = { Text("Buscar") }
+            // Barra de búsqueda
+            SearchItemBar(
+                query = searchQuery,
+                onQueryChange = viewModel::updateSearchQuery,
+                onSearch = viewModel::onSearchSubmit,
+                onFilterClick = { /* Implementar filtros */ },
+                expanded = isSearchExpanded,
+                onExpandedChange = viewModel::setSearchExpanded,
+                modifier = Modifier.fillMaxWidth()
             )
 
+            // Contenido principal con Pull-to-Refresh
+            when {
+                isSearchExpanded -> {
+                    SearchContent(
+                        searchResults = uiState.searchResults,
+                        isSearching = uiState.isSearching,
+                        searchError = uiState.searchError,
+                        canLoadMore = uiState.canLoadMoreSearch,
+                        onLoadMore = viewModel::loadMoreSearchResults,
+                        navController = navController,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                else -> {
+                    // Usar SwipeRefresh para eventos del usuario
+                    SwipeRefresh(
+                        state = rememberSwipeRefreshState(uiState.isLoading),
+                        onRefresh = { viewModel.refreshUserEvents() },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        EventsContent(
+                            events = uiState.userEvents,
+                            isLoading = uiState.isLoading,
+                            error = uiState.error,
+                            canLoadMore = uiState.canLoadMore,
+                            onLoadMore = viewModel::loadMoreUserEvents,
+                            navController = navController,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun EventsContent(
+    events: List<Event>,
+    isLoading: Boolean,
+    error: String?,
+    canLoadMore: Boolean,
+    onLoadMore: () -> Unit,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
-    paddingValues ->
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(horizontal = 16.dp),
+        modifier = modifier.padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        //Listar
+        if (error != null) {
+            item {
+                ErrorMessage(
+                    message = error,
+                    onRetry = { /* Implementar retry */ }
+                )
+            }
+        }
+
+        items(events) { event ->
+            EventItem(event = event, navController = navController)
+        }
+
+        if (canLoadMore) {
+            item {
+                LoadMoreButton(
+                    isLoading = isLoading,
+                    onClick = onLoadMore
+                )
+            }
+        }
+
+        if (events.isEmpty() && !isLoading && error == null) {
+            item {
+                EmptyEventsMessage()
+            }
+        }
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun SearchContent(
+    searchResults: List<Event>,
+    isSearching: Boolean,
+    searchError: String?,
+    canLoadMore: Boolean,
+    onLoadMore: () -> Unit,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        if (searchError != null) {
+            item {
+                ErrorMessage(
+                    message = searchError,
+                    onRetry = { /* Implementar retry */ }
+                )
+            }
+        }
+
+        items(searchResults) { event ->
+            EventItem(event = event, navController = navController)
+        }
+
+        if (canLoadMore) {
+            item {
+                LoadMoreButton(
+                    isLoading = isSearching,
+                    onClick = onLoadMore
+                )
+            }
+        }
+
+        if (searchResults.isEmpty() && !isSearching && searchError == null) {
+            item {
+                EmptySearchMessage()
+            }
+        }
+    }
 }
 
+@Composable
+fun ErrorMessage(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Error: $message",
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onRetry) {
+                Text("Reintentar")
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadMoreButton(
+    isLoading: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            Button(onClick = onClick) {
+                Text("Cargar más")
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyEventsMessage() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.CalendarToday,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No tienes eventos creados",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = "Crea tu primer evento tocando el botón +",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun EmptySearchMessage() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Search,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No se encontraron eventos",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = "Intenta con otros términos de búsqueda",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+// EventItem mantiene el mismo código que tenías
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,7 +378,6 @@ fun EventItem(event: Event, navController: NavHostController) {
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Gradiente para mejorar legibilidad del texto sobre la imagen
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -196,11 +452,11 @@ fun EventItem(event: Event, navController: NavHostController) {
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = event.locationName ?: "Sin ubicación",
+                    /*Text(
+                        text = event.locationName,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
+                    )*/
                 }
 
                 Surface(
@@ -209,7 +465,7 @@ fun EventItem(event: Event, navController: NavHostController) {
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
                     Text(
-                        text = "${0} invitados",
+                        text = "0 invitados",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -219,8 +475,9 @@ fun EventItem(event: Event, navController: NavHostController) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun formatDate(date: LocalDate): String {
-    val formatter = SimpleDateFormat("d MMM · HH:mm", Locale("es", "ES"))
-    return formatter.format(date)
+    val formatter = DateTimeFormatter.ofPattern("d MMM", Locale("es", "ES"))
+    return date.format(formatter)
 }

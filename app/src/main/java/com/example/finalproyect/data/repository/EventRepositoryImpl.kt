@@ -28,6 +28,7 @@ import javax.inject.Inject
 class EventRepositoryImpl @Inject constructor(
     private val eventApi: EventApi
 ) : EventRepository {
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun searchPublicEvents(
         name: String,
         page: Int,

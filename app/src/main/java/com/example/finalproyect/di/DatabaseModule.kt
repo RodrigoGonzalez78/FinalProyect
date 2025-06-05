@@ -47,7 +47,9 @@ object DatabaseModule {
     fun provideLocationDao(appDatabase: AppDatabase): LocationDao {
         return appDatabase.locationDao()
     }
+
     @Provides
+    @Singleton
     fun provideOrganizerDao(database: AppDatabase): OrganizerDao {
         return database.organizerDao()
     }

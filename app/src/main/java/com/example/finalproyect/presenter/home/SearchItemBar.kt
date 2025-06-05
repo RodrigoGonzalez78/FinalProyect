@@ -24,7 +24,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
+// SearchItemBar.kt - Tu componente original
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchItemBar(
@@ -251,3 +251,4 @@ fun SearchFilterButton(
         )
     }
 }
+
