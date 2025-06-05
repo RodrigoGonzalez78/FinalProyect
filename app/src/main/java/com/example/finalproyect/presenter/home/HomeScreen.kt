@@ -92,9 +92,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        items(sampleEvents) { event ->
-            EventItem(event = event, navController)
-        }
+        //Listar
     }
 }
 }

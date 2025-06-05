@@ -9,20 +9,34 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EventDao {
-    @Transaction
-    @Query("SELECT * FROM events ORDER BY date DESC")
-    fun getAllEvents(): Flow<List<EventWithLocation>>
-
-    @Transaction
-    @Query("SELECT * FROM events WHERE id = :eventId")
-    fun getEventById(eventId: Long): Flow<EventWithLocation?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertEvent(event: EventEntity): Long
+    suspend fun insertEvent(event: EventEntity)
 
-    @Update
-    suspend fun updateEvent(event: EventEntity)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEvents(events: List<EventEntity>)
 
-    @Delete
-    suspend fun deleteEvent(event: EventEntity)
+    @Query("SELECT * FROM events WHERE id_event = :eventId")
+    fun getEventById(eventId: Int): Flow<EventEntity>
+
+    @Query("SELECT * FROM events WHERE is_public = 1 ORDER BY created_at DESC LIMIT :size OFFSET :offset")
+    suspend fun getPublicEvents(size: Int, offset: Int): List<EventEntity>
+
+    @Query("SELECT COUNT(*) FROM events WHERE is_public = 1")
+    suspend fun getPublicEventsCount(): Int
+
+    @Query("SELECT * FROM events WHERE user_id = :userId ORDER BY created_at DESC LIMIT :size OFFSET :offset")
+    suspend fun getEventsByUserId(userId: String, size: Int, offset: Int): List<EventEntity>
+
+    @Query("SELECT COUNT(*) FROM events WHERE user_id = :userId")
+    suspend fun getEventsCountByUserId(userId: String): Int
+
+    @Query("SELECT * FROM events WHERE name LIKE '%' || :searchName || '%' AND is_public = 1 ORDER BY created_at DESC LIMIT :size OFFSET :offset")
+    suspend fun searchPublicEvents(searchName: String, size: Int, offset: Int): List<EventEntity>
+
+    @Query("SELECT COUNT(*) FROM events WHERE name LIKE '%' || :searchName || '%' AND is_public = 1")
+    suspend fun getPublicEventsCount(searchName: String): Int
+
+    @Query("DELETE FROM events WHERE id_event = :eventId")
+    suspend fun deleteEventById(eventId: Int)
 }

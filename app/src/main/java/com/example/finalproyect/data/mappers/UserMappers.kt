@@ -21,8 +21,6 @@ fun UserDto.toUser(): User {
         birthday = LocalDate.parse(birthday),
         email = email,
         phone = phone,
-        createdAt = LocalDateTime.parse(createdAt),
-        updatedAt = LocalDateTime.parse(updatedAt)
     )
 }
 
@@ -48,8 +46,6 @@ fun UserEntity.toUser(): User {
         birthday = birthday,
         email = email,
         phone = phone,
-        createdAt = createdAt,
-        updatedAt = updatedAt
     )
 }
 

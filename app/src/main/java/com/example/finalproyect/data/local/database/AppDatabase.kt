@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.finalproyect.data.local.dao.EventDao
 import com.example.finalproyect.data.local.dao.LocationDao
+import com.example.finalproyect.data.local.dao.OrganizerDao
 import com.example.finalproyect.data.local.dao.UserDao
 import com.example.finalproyect.data.local.entity.EventEntity
 import com.example.finalproyect.data.local.entity.LocationEntity
@@ -24,4 +25,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun eventDao(): EventDao
     abstract fun locationDao(): LocationDao
+    abstract fun organizerDao(): OrganizerDao
 }
