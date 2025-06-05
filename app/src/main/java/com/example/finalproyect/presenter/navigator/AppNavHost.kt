@@ -8,9 +8,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.finalproyect.presenter.event_detail.EventDetailScreen
 import com.example.finalproyect.presenter.home.HomeScreen
 import com.example.finalproyect.presenter.login.LoginScreen
@@ -25,7 +27,9 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object NewEvent : Screen("mew_event")
     data object Profile : Screen("profile")
-    data object EventDetails:Screen("event_detail")
+    data object EventDetails:Screen("event_detail?eventId={evenId}"){
+        fun createRoute(eventId: String) = "event_details?eventId=$eventId"
+    }
     data object UsersProfiles : Screen("users_profiles?userId={userId}") {
         fun createRoute(userId: String) = "users_profiles?userId=$userId"
     }
@@ -65,9 +69,16 @@ fun AppNavHost(
                 navController
             )
         }
-        composable(Screen.EventDetails.route){
+        composable(Screen.EventDetails.route, arguments = listOf(
+            navArgument("eventId") {
+                type = NavType.StringType
+                nullable = true
+            }
+        )) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("eventId")
             EventDetailScreen(
-                navController
+                navController,
+                userId?:""
             )
         }
 

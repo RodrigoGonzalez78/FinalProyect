@@ -30,7 +30,7 @@ import com.example.finalproyect.presenter.navigator.Screen
 @Composable
 fun EventDetailScreen(
     navController: NavHostController,
-    eventId: Int,
+    eventId: String,
     viewModel: EventDetailsViewModels = hiltViewModel()
 ) {
     val context = LocalContext.current

@@ -30,12 +30,12 @@ class EventDetailsViewModels @Inject constructor(
         _uiState.value = EventDetailUiState()
     }
 
-    fun loadEventDetail(eventId: Int) {
+    fun loadEventDetail(eventId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             try {
-                val result = getEventDetailUseCase(eventId)
+                val result = getEventDetailUseCase(eventId.toInt())
                 result.fold(
                     onSuccess = { eventDetail ->
                         _uiState.value = _uiState.value.copy(

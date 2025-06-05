@@ -25,14 +25,16 @@ import java.time.format.DateTimeParseException
 // Formatters para parsing consistente
 @RequiresApi(Build.VERSION_CODES.O)
 private val isoDateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
+
 @RequiresApi(Build.VERSION_CODES.O)
 private val isoDateFormatter = DateTimeFormatter.ISO_DATE
+
 @RequiresApi(Build.VERSION_CODES.O)
 private val isoTimeFormatter = DateTimeFormatter.ISO_TIME
 
 // Extension para parsear fechas ISO 8601 de forma segura
 @RequiresApi(Build.VERSION_CODES.O)
-private fun String.parseIsoDateTime(): LocalDateTime {
+fun String.parseIsoDateTime(): LocalDateTime {
     return try {
         // Remover la Z si existe y parsear
         val cleanDateTime = this.replace("Z", "").replace("+00:00", "")
@@ -49,7 +51,7 @@ private fun String.parseIsoDateTime(): LocalDateTime {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun String.parseIsoDate(): LocalDate {
+fun String.parseIsoDate(): LocalDate {
     return try {
         // Extraer solo la parte de fecha si viene con tiempo
         val dateOnly = if (this.contains("T")) this.substring(0, 10) else this
@@ -60,7 +62,7 @@ private fun String.parseIsoDate(): LocalDate {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun String.parseIsoTime(): LocalTime {
+fun String.parseIsoTime(): LocalTime {
     return try {
         // Extraer solo la parte de tiempo si viene con fecha
         val timeOnly = if (this.contains("T")) {

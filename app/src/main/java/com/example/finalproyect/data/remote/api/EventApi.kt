@@ -38,4 +38,7 @@ interface EventApi {
     suspend fun deleteEvent(
         @Path("id") eventId: Int
     ): Response<Unit>
+
+    @POST("events")
+    suspend fun createEvent(@Body request: CreateEventRequest): Response<EventDto>
 }
