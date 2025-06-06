@@ -1,6 +1,7 @@
 package com.example.finalproyect.presenter.navigator
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,7 +28,7 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object NewEvent : Screen("mew_event")
     data object Profile : Screen("profile")
-    data object EventDetails:Screen("event_detail?eventId={evenId}"){
+    data object EventDetails:Screen("event_details?eventId={eventId}"){
         fun createRoute(eventId: String) = "event_details?eventId=$eventId"
     }
     data object UsersProfiles : Screen("users_profiles?userId={userId}") {
@@ -75,10 +76,11 @@ fun AppNavHost(
                 nullable = true
             }
         )) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("eventId")
+            val eventId = backStackEntry.arguments?.getString("eventId")
+            Log.e("Error",eventId.toString())
             EventDetailScreen(
                 navController,
-                userId?:""
+                eventId = eventId?:""
             )
         }
 

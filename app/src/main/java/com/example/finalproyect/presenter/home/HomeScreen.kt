@@ -1,6 +1,7 @@
 package com.example.finalproyect.presenter.home
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -364,7 +365,10 @@ fun EventItem(event: Event, navController: NavHostController) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
-        onClick = { navController.navigate(Screen.EventDetails.route) }
+        onClick = {
+            Log.e("Errror",event.id.toString())
+            navController.navigate(Screen.EventDetails.createRoute(eventId = event.id.toString()))
+        }
     ) {
         Box(
             modifier = Modifier
