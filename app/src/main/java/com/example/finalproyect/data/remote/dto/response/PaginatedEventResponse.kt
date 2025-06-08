@@ -9,5 +9,5 @@ data class PaginatedEventsResponse(
     @SerializedName ("size")
     val size: Int,
     @SerializedName ("events")
-    val events: List<EventDto>
+    val events: List<EventDto>?
 )

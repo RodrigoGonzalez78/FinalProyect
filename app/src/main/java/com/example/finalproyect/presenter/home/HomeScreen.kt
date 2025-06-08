@@ -8,19 +8,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,42 +45,45 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
-// HomeScreen.kt - Composable actualizado
+
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     viewModel: HomeViewModel = hiltViewModel(),
-    onNavigationItemSelected: (String) -> Unit = {},
-    activeTab: String = "events"
+
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
+
+    var activeTab by remember { mutableStateOf<String>("events") }
 
     Scaffold(
         topBar = {
-            if (!isSearchExpanded) {
-                TopAppBar(
-                    title = { Text("Mis Eventos", fontWeight = FontWeight.Bold) },
-                    actions = {
-                        IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = "Perfil",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (activeTab == "events") "Mis Eventos" else "Buscar Eventos",
+                        fontWeight = FontWeight.Bold
                     )
+                },
+                actions = {
+                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = "Perfil",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
-            }
+            )
         },
         floatingActionButton = {
-            if (!isSearchExpanded) {
+            if (activeTab == "events") { // Solo mostrar FAB en la pestaña de eventos
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.NewEvent.route) },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -81,27 +94,22 @@ fun HomeScreen(
             }
         },
         bottomBar = {
-            if (!isSearchExpanded) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
-                    tonalElevation = 0.dp
-                ) {
-                    NavigationBarItem(
-                        selected = activeTab == "events",
-                        onClick = { onNavigationItemSelected("events") },
-                        icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
-                        label = { Text("Eventos") }
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == "search",
-                        onClick = {
-                            onNavigationItemSelected("search")
-                            viewModel.setSearchExpanded(true)
-                        },
-                        icon = { Icon(Icons.Outlined.Search, contentDescription = "Buscar") },
-                        label = { Text("Buscar") }
-                    )
-                }
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
+                tonalElevation = 0.dp
+            ) {
+                NavigationBarItem(
+                    selected = activeTab == "events",
+                    onClick = { activeTab = "events" },
+                    icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
+                    label = { Text("Mis Eventos") }
+                )
+                NavigationBarItem(
+                    selected = activeTab == "search",
+                    onClick = { activeTab = "search" },
+                    icon = { Icon(Icons.Outlined.Search, contentDescription = "Buscar") },
+                    label = { Text("Buscar") }
+                )
             }
         }
     ) { paddingValues ->
@@ -110,31 +118,19 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Barra de búsqueda
-            SearchItemBar(
-                query = searchQuery,
-                onQueryChange = viewModel::updateSearchQuery,
-                onSearch = viewModel::onSearchSubmit,
-                onFilterClick = { /* Implementar filtros */ },
-                expanded = isSearchExpanded,
-                onExpandedChange = viewModel::setSearchExpanded,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Mostrar barra de búsqueda solo cuando estamos en la pestaña de búsqueda
+            if (activeTab == "search") {
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = viewModel::updateSearchQuery,
+                    onSearch = viewModel::onSearchSubmit,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
-            // Contenido principal con Pull-to-Refresh
-            when {
-                isSearchExpanded -> {
-                    SearchContent(
-                        searchResults = uiState.searchResults,
-                        isSearching = uiState.isSearching,
-                        searchError = uiState.searchError,
-                        canLoadMore = uiState.canLoadMoreSearch,
-                        onLoadMore = viewModel::loadMoreSearchResults,
-                        navController = navController,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                else -> {
+            // Contenido basado en la pestaña activa
+            when (activeTab) {
+                "events" -> {
                     // Usar SwipeRefresh para eventos del usuario
                     SwipeRefresh(
                         state = rememberSwipeRefreshState(uiState.isLoading),
@@ -151,6 +147,95 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
+                }
+                "search" -> {
+                    SearchContent(
+                        searchResults = uiState.searchResults,
+                        isSearching = uiState.isSearching,
+                        searchError = uiState.searchError,
+                        canLoadMore = uiState.canLoadMoreSearch,
+                        onLoadMore = viewModel::loadMoreSearchResults,
+                        navController = navController,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            TextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.weight(1f),
+                placeholder = {
+                    Text(
+                        text = "Buscar eventos...",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        onSearch()
+                        focusManager.clearFocus()
+                    }
+                ),
+                singleLine = true
+            )
+
+            if (query.isNotEmpty()) {
+                IconButton(
+                    onClick = { onQueryChange("") }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Limpiar",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -461,18 +546,6 @@ fun EventItem(event: Event, navController: NavHostController) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )*/
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    contentColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Text(
-                        text = "0 invitados",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
                 }
             }
         }

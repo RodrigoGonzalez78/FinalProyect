@@ -1,5 +1,7 @@
 package com.example.finalproyect.presenter.event_detail.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EventDetailContent(
     eventDetail: EventDetail,
@@ -85,9 +88,7 @@ fun EventDetailContent(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale("es", "ES")).format(
-                        eventDetail.event.date
-                    ),
+                    text = eventDetail.event.date.month.name,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )

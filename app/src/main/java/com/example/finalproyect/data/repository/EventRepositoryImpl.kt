@@ -187,7 +187,7 @@ class EventRepositoryImpl @Inject constructor(
 
                     // Crear y guardar la ubicación en la base de datos local
                     val locationEntity = LocationEntity(
-                        id = createEventResponse.idLocation,
+                        id = createEventResponse.idLocation?:0,
                         name = locationName,
                         direction = locationDirection,
                         latitude = locationLatitude,
@@ -200,7 +200,7 @@ class EventRepositoryImpl @Inject constructor(
                     // Crear y guardar el evento en la base de datos local
                     val eventEntity = EventEntity(
                         id = createEventResponse.idEvent,
-                        locationId = createEventResponse.idLocation,
+                        locationId = createEventResponse.idLocation?:0,
                         date = date.parseIsoDate(),
                         startTime = startTime.parseIsoTime(),
                         endTime = endTime.parseIsoTime(),
@@ -216,7 +216,7 @@ class EventRepositoryImpl @Inject constructor(
 
                     // Crear el objeto Location para el Event
                     val location = Location(
-                        id = createEventResponse.idLocation,
+                        id = createEventResponse.idLocation?:0,
                         name = locationName,
                         direction = locationDirection,
                         latitude = locationLatitude,
@@ -228,7 +228,7 @@ class EventRepositoryImpl @Inject constructor(
                     // Crear y retornar el Event
                     val event = Event(
                         id = createEventResponse.idEvent,
-                        locationId = createEventResponse.idLocation,
+                        locationId = createEventResponse.idLocation?:0,
                         date = date.parseIsoDate(),
                         startTime = startTime.parseIsoTime(),
                         endTime = endTime.parseIsoTime(),

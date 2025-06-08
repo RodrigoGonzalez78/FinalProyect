@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class EventDto(
     @SerializedName("id_event") val idEvent: Long,
-    @SerializedName("id_location") val idLocation: Long,
+    @SerializedName("id_location") val idLocation: Long?,
     @SerializedName("date") val date: String, // ISO format
     @SerializedName("start_time") val startTime: String, // ISO format
     @SerializedName("end_time") val endTime: String, // ISO format

@@ -87,7 +87,7 @@ fun String.parseIsoTime(): LocalTime {
 fun EventDto.toEventEntity(userId: String): EventEntity {
     return EventEntity(
         id = idEvent,
-        locationId = idLocation,
+        locationId = idLocation?:0,
         date = date.parseIsoDate(),
         startTime = startTime.parseIsoTime(),
         endTime = endTime.parseIsoTime(),
@@ -177,7 +177,7 @@ fun EventWithLocation.toEvent(): Event {
 fun EventDto.toEvent(location: Location? = null): Event {
     return Event(
         id = idEvent,
-        locationId = idLocation,
+        locationId = idLocation?:0,
         date = date.parseIsoDate(),
         startTime = startTime.parseIsoTime(),
         endTime = endTime.parseIsoTime(),
@@ -196,17 +196,53 @@ fun PaginatedEventsResponse.toPaginatedEvents(): PaginatedEvents {
     return PaginatedEvents(
         page = page,
         size = size,
-        events = events.map { it.toEvent() }
+        events = if (events.isNullOrEmpty()) emptyList() else events.map { it.toEvent() }
     )
 }
 
+// NUEVO MAPPER para EventDetailResponse
 @RequiresApi(Build.VERSION_CODES.O)
 fun EventDetailResponse.toEventDetail(): EventDetail {
-    return EventDetail(
-        event = event.toEvent(location.toLocation()),
-        location = location.toLocation(),
-        organizers = organizers.map { it.toOrganizerResponse() }
-    )
+    return try {
+        // Crear el objeto Location
+        val location = this.location?.toLocation() ?: Location(
+            id = (this.idLocation ?: 0).toLong(),
+            name = "Unknown Location",
+            direction = "",
+            latitude = 0.0,
+            longitude = 0.0,
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now()
+        )
+
+        // Crear el objeto Event usando los campos directos de EventDetailResponse
+        val event = Event(
+            id = this.idEvent.toLong()
+            ,
+            locationId = (this.idLocation ?: 0).toLong(),
+            date = this.date.parseIsoDate(),
+            startTime = this.startTime.parseIsoTime(),
+            endTime = this.endTime.parseIsoTime(),
+            name = this.name ?: "",
+            description = this.description ?: "",
+            banner = this.banner,
+            isPublic = this.isPublic ?: false,
+            createdAt = this.createdAt.parseIsoDateTime(),
+            updatedAt = this.updatedAt.parseIsoDateTime(),
+            location = location
+        )
+
+        // Crear la lista de organizadores
+        val organizers = this.organizers.map { it.toOrganizerResponse() } ?: emptyList()
+
+        EventDetail(
+            event = event,
+            location = location,
+            organizers = organizers
+        )
+    } catch (e: Exception) {
+        throw IllegalArgumentException("Error mapping EventDetailResponse to EventDetail: ${e.message}", e)
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
