@@ -6,7 +6,10 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.Event
+import com.example.finalproyect.domain.repository.GoogleMapsRepository
 import com.example.finalproyect.domain.usecase.event.CreateEventUseCase
+import com.example.finalproyect.domain.usecase.event.UpdateEventUseCase
+import com.example.finalproyect.domain.usecase.upload.UploadImageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,15 +21,61 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class NewEventViewModel @Inject constructor(
-    private val createEventUseCase: CreateEventUseCase
+    private val createEventUseCase: CreateEventUseCase,
+    private val googleMapsRepository: GoogleMapsRepository,
+    private val uploadImageUseCase: UploadImageUseCase, // Inyectar el repositorio de Google Maps
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NewEventUiState())
     val uiState: StateFlow<NewEventUiState> = _uiState.asStateFlow()
+
+    // Lista de ubicaciones obtenidas de Google Maps
+    private val _locations = MutableStateFlow<List<Location>>(emptyList())
+    val locations: StateFlow<List<Location>> = _locations.asStateFlow()
+
+    init {
+        loadNearbyLocations()
+    }
+
+    private fun loadNearbyLocations() {
+        viewModelScope.launch {
+            try {
+                // Coordenadas de Corrientes, Argentina como ejemplo
+                val latitude = -27.467
+                val longitude = -58.830
+                val radius = 5000 // 5km
+
+                val result = googleMapsRepository.getNearbyPlaces(
+                    latitude = latitude,
+                    longitude = longitude,
+                    radius = radius,
+                    type = "establishment" // Puedes cambiar el tipo según necesites
+                )
+
+                result.fold(
+                    onSuccess = { places ->
+                        _locations.value = places.map { place ->
+                            Location(
+                                name = place.name,
+                                address = place.address,
+                                latitude = place.latitude,
+                                longitude = place.longitude
+                            )
+                        }
+                    },
+                    onFailure = {
+                        // Fallback a ubicaciones de ejemplo si falla Google Maps
+                        _locations.value = sampleLocations
+                    }
+                )
+            } catch (e: Exception) {
+                _locations.value = sampleLocations
+            }
+        }
+    }
 
     fun onNameChange(newName: String) {
         _uiState.update { it.copy(name = newName, errorMessage = null, successMessage = null) }
@@ -80,20 +129,6 @@ class NewEventViewModel @Inject constructor(
         _uiState.update { it.copy(isPublic = isPublic, errorMessage = null, successMessage = null) }
     }
 
-    fun onIsFreeChange(isFree: Boolean) {
-        _uiState.update { it.copy(isFree = isFree, errorMessage = null, successMessage = null) }
-    }
-
-    fun onMaxGuestsChange(newMaxGuests: String) {
-        _uiState.update {
-            it.copy(
-                maxGuests = newMaxGuests,
-                errorMessage = null,
-                successMessage = null
-            )
-        }
-    }
-
     fun onBannerUriChange(uri: Uri?) {
         _uiState.update { it.copy(bannerUri = uri, errorMessage = null, successMessage = null) }
     }
@@ -102,87 +137,104 @@ class NewEventViewModel @Inject constructor(
         _uiState.update { it.copy(errorMessage = null, successMessage = null) }
     }
 
-
     fun createEvent() {
         val current = _uiState.value
 
-        if (!current.isFormValid()) {
-            _uiState.update { it.copy(errorMessage = "Completa todos los campos correctamente.") }
+        if (!current.isFormValid() || current.bannerUri == null) {
+            _uiState.update {
+                it.copy(errorMessage = "Completa todos los campos correctamente y selecciona una imagen.")
+            }
             return
         }
 
-        fun createEvent() {
-            val current = _uiState.value
-
-            if (!current.isFormValid()) {
-                _uiState.update { it.copy(errorMessage = "Completa todos los campos correctamente.") }
-                return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    successMessage = null
+                )
             }
 
-            viewModelScope.launch {
+            try {
+                // Primero subir la imagen
+                val uploadResult = uploadImageUseCase(current.bannerUri!!)
+
+                uploadResult.fold(
+                    onSuccess = { imageUrl ->
+                        // Una vez subida la imagen, crear el evento
+                        createEventWithImageUrl(imageUrl)
+                    },
+                    onFailure = { ex ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = ex.message ?: "Error al subir la imagen"
+                            )
+                        }
+                    }
+                )
+            } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        isLoading = true,
-                        errorMessage = null,
-                        successMessage = null
+                        isLoading = false,
+                        errorMessage = e.message ?: "Error inesperado al subir la imagen"
                     )
-                }
-
-                try {
-                    val bannerStr = current.bannerUri?.toString().orEmpty()
-                    val loc = current.selectedLocation!!
-
-                    // Ahora pasamos LocalDate y LocalTime directamente
-                    val result: Result<Event> = createEventUseCase(
-                        name = current.name,
-                        description = current.description,
-                        date = current.selectedDate,
-                        startTime = current.startTime,
-                        endTime = current.endTime,
-                        banner = bannerStr,
-                        isPublic = current.isPublic,
-                        locationName = loc.name,
-                        locationDirection = loc.address,
-                        locationLatitude = loc.latitude,
-                        locationLongitude = loc.longitude
-                    )
-
-                    result.fold(
-                        onSuccess = {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    successMessage = "Evento creado correctamente"
-                                )
-                            }
-                        },
-                        onFailure = { ex ->
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    errorMessage = ex.message ?: "Error al crear el evento"
-                                )
-                            }
-                        }
-                    )
-                } catch (e: Exception) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = e.message ?: "Error inesperado"
-                        )
-                    }
                 }
             }
         }
+    }
 
+    private suspend fun createEventWithImageUrl(imageUrl: String) {
+        val current = _uiState.value
+        val loc = current.selectedLocation!!
 
+        try {
+            val result: Result<Event> = createEventUseCase(
+                name = current.name,
+                description = current.description,
+                date = current.selectedDate,
+                startTime = current.startTime,
+                endTime = current.endTime,
+                banner = imageUrl, // URL de la imagen subida
+                isPublic = current.isPublic,
+                locationName = loc.name,
+                locationDirection = loc.address,
+                locationLatitude = loc.latitude,
+                locationLongitude = loc.longitude
+            )
+
+            result.fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            successMessage = "Evento creado correctamente"
+                        )
+                    }
+                },
+                onFailure = { ex ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = ex.message ?: "Error al crear el evento"
+                        )
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    errorMessage = e.message ?: "Error inesperado al crear el evento"
+                )
+            }
+        }
     }
 }
 
-
 @RequiresApi(Build.VERSION_CODES.O)
-data class NewEventUiState constructor(
+data class NewEventUiState(
     val name: String = "",
     val description: String = "",
     val selectedLocation: Location? = null,
@@ -205,6 +257,7 @@ data class NewEventUiState constructor(
                 && selectedLocation != null
                 && max != null
                 && startTime < endTime
+                && bannerUri != null // Validar que hay imagen seleccionada
     }
 }
 
@@ -213,4 +266,11 @@ data class Location(
     val address: String,
     val latitude: Double,
     val longitude: Double
+)
+
+// Ubicaciones de ejemplo como fallback
+val sampleLocations = listOf(
+    Location("Centro Cultural", "Av. Principal 123", -27.467, -58.830),
+    Location("Parque Central", "Calle Falsa 456", -27.470, -58.825),
+    Location("Auditorio Municipal", "Av. Libertad 789", -27.471, -58.828)
 )

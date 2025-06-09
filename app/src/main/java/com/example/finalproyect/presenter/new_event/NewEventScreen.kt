@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +43,6 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
-
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,18 +51,28 @@ fun NewEventScreen(
     viewModel: NewEventViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val locations by viewModel.locations.collectAsState()
     val context = LocalContext.current
 
     // Snackbar host
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
-        uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
+
+    // Efectos para mostrar mensajes
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
             viewModel.clearMessages()
         }
-        uiState.successMessage?.let {
-            snackbarHostState.showSnackbar(it)
+    }
+
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
             viewModel.clearMessages()
+            // Navegar de vuelta después de crear exitosamente
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Home.route) { inclusive = true }
+            }
         }
     }
 
@@ -70,7 +82,7 @@ fun NewEventScreen(
     var showEndTimePicker by remember { mutableStateOf(false) }
     var showLocationPicker by remember { mutableStateOf(false) }
 
-    // Launchers
+    // Launcher para seleccionar imagen
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -88,8 +100,18 @@ fun NewEventScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.createEvent() }) {
-                        Icon(Icons.Default.Check, contentDescription = "Guardar")
+                    IconButton(
+                        onClick = { viewModel.createEvent() },
+                        enabled = !uiState.isLoading
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.Check, contentDescription = "Guardar")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -106,7 +128,7 @@ fun NewEventScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Banner
+            // Banner con indicador de carga
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -115,36 +137,56 @@ fun NewEventScreen(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = if (uiState.bannerUri == null) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(12.dp)
                     )
-                    .clickable { imagePickerLauncher.launch("image/*") },
+                    .clickable(enabled = !uiState.isLoading) {
+                        imagePickerLauncher.launch("image/*")
+                    },
                 contentAlignment = Alignment.Center
             ) {
-                if (uiState.bannerUri != null) {
-                    AsyncImage(
-                        model = uiState.bannerUri,
-                        contentDescription = "Banner del evento",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AddCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                when {
+                    uiState.bannerUri != null -> {
+                        AsyncImage(
+                            model = uiState.bannerUri,
+                            contentDescription = "Banner del evento",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Seleccionar imagen de banner",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    }
+                    uiState.isLoading -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Subiendo imagen...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    else -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Seleccionar imagen de banner",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -163,7 +205,8 @@ fun NewEventScreen(
                 label = { Text("Nombre del evento") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                isError = uiState.name.isBlank()
+                isError = uiState.name.isBlank(),
+                enabled = !uiState.isLoading
             )
             if (uiState.name.isBlank()) {
                 Text(
@@ -182,7 +225,8 @@ fun NewEventScreen(
                     .fillMaxWidth()
                     .height(120.dp),
                 maxLines = 5,
-                isError = uiState.description.isBlank()
+                isError = uiState.description.isBlank(),
+                enabled = !uiState.isLoading
             )
             if (uiState.description.isBlank()) {
                 Text(
@@ -200,14 +244,18 @@ fun NewEventScreen(
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(onClick = { showLocationPicker = true }) {
+                    IconButton(
+                        onClick = { showLocationPicker = true },
+                        enabled = !uiState.isLoading
+                    ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Seleccionar ubicación"
                         )
                     }
                 },
-                isError = uiState.selectedLocation == null
+                isError = uiState.selectedLocation == null,
+                enabled = !uiState.isLoading
             )
             if (uiState.selectedLocation == null) {
                 Text(
@@ -225,13 +273,17 @@ fun NewEventScreen(
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
+                    IconButton(
+                        onClick = { showDatePicker = true },
+                        enabled = !uiState.isLoading
+                    ) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
                             contentDescription = "Seleccionar fecha"
                         )
                     }
-                }
+                },
+                enabled = !uiState.isLoading
             )
 
             // Hora inicio / fin
@@ -246,13 +298,17 @@ fun NewEventScreen(
                     modifier = Modifier.weight(1f),
                     readOnly = true,
                     trailingIcon = {
-                        IconButton(onClick = { showStartTimePicker = true }) {
+                        IconButton(
+                            onClick = { showStartTimePicker = true },
+                            enabled = !uiState.isLoading
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.DateRange,
+                                imageVector = Icons.Default.Schedule,
                                 contentDescription = "Seleccionar hora de inicio"
                             )
                         }
-                    }
+                    },
+                    enabled = !uiState.isLoading
                 )
                 OutlinedTextField(
                     value = uiState.endTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")),
@@ -261,13 +317,17 @@ fun NewEventScreen(
                     modifier = Modifier.weight(1f),
                     readOnly = true,
                     trailingIcon = {
-                        IconButton(onClick = { showEndTimePicker = true }) {
+                        IconButton(
+                            onClick = { showEndTimePicker = true },
+                            enabled = !uiState.isLoading
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.DateRange,
+                                imageVector = Icons.Default.Schedule,
                                 contentDescription = "Seleccionar hora de fin"
                             )
                         }
-                    }
+                    },
+                    enabled = !uiState.isLoading
                 )
             }
             if (uiState.startTime >= uiState.endTime) {
@@ -278,7 +338,7 @@ fun NewEventScreen(
                 )
             }
 
-            // Switches público / gratuito
+            // Switch evento público
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -287,40 +347,8 @@ fun NewEventScreen(
                 Text(text = "Evento público", style = MaterialTheme.typography.bodyLarge)
                 Switch(
                     checked = uiState.isPublic,
-                    onCheckedChange = { viewModel.onIsPublicChange(it) }
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Evento gratuito", style = MaterialTheme.typography.bodyLarge)
-                Switch(
-                    checked = uiState.isFree,
-                    onCheckedChange = { viewModel.onIsFreeChange(it) }
-                )
-            }
-
-            // Máximo invitados
-            OutlinedTextField(
-                value = uiState.maxGuests,
-                onValueChange = {
-                    if (it.isEmpty() || it.toIntOrNull() != null) {
-                        viewModel.onMaxGuestsChange(it)
-                    }
-                },
-                label = { Text("Máximo de invitados") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                isError = uiState.maxGuests.isNotEmpty() && uiState.maxGuests.toIntOrNull() == null
-            )
-            if (uiState.maxGuests.isNotEmpty() && uiState.maxGuests.toIntOrNull() == null) {
-                Text(
-                    text = "Ingresa un número válido",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
+                    onCheckedChange = { viewModel.onIsPublicChange(it) },
+                    enabled = !uiState.isLoading
                 )
             }
 
@@ -333,26 +361,31 @@ fun NewEventScreen(
             ) {
                 OutlinedButton(
                     onClick = { navController.navigate(Screen.Home.route) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enabled = !uiState.isLoading
                 ) {
                     Text("Cancelar")
                 }
                 Button(
                     onClick = { viewModel.createEvent() },
                     modifier = Modifier.weight(1f),
-                    enabled = uiState.isFormValid() && uiState.bannerUri != null
+                    enabled = uiState.isFormValid() && !uiState.isLoading
                 ) {
-                    Text("Guardar")
-                }
-            }
-
-            // Loading indicator
-            if (uiState.isLoading) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    CircularProgressIndicator()
+                    if (uiState.isLoading) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Creando...")
+                        }
+                    } else {
+                        Text("Guardar")
+                    }
                 }
             }
         }
@@ -393,11 +426,9 @@ fun NewEventScreen(
 
     // TimePickerDialog para Hora de Inicio
     if (showStartTimePicker) {
-        val initialHour = uiState.startTime.hour
-        val initialMinute = uiState.startTime.minute
         val timePickerState = rememberTimePickerState(
-            initialHour = initialHour,
-            initialMinute = initialMinute
+            initialHour = uiState.startTime.hour,
+            initialMinute = uiState.startTime.minute
         )
         TimePickerDialog(
             onDismissRequest = { showStartTimePicker = false },
@@ -413,11 +444,9 @@ fun NewEventScreen(
 
     // TimePickerDialog para Hora de Fin
     if (showEndTimePicker) {
-        val initialHour = uiState.endTime.hour
-        val initialMinute = uiState.endTime.minute
         val timePickerState = rememberTimePickerState(
-            initialHour = initialHour,
-            initialMinute = initialMinute
+            initialHour = uiState.endTime.hour,
+            initialMinute = uiState.endTime.minute
         )
         TimePickerDialog(
             onDismissRequest = { showEndTimePicker = false },
@@ -431,10 +460,10 @@ fun NewEventScreen(
         }
     }
 
-    // LocationPickerDialog
+    // LocationPickerDialog - Ahora usa las ubicaciones del ViewModel
     if (showLocationPicker) {
         LocationPickerDialog(
-            locations = sampleLocations, // lista de locations disponible en tu repositorio o mock
+            locations = locations,
             onDismissRequest = { showLocationPicker = false },
             onLocationSelected = { location ->
                 viewModel.onLocationSelected(location)
@@ -476,14 +505,33 @@ fun LocationPickerDialog(
         onDismissRequest = onDismissRequest,
         title = { Text("Seleccionar ubicación") },
         text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 300.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                locations.forEach { location ->
-                    LocationItem(location = location, onClick = { onLocationSelected(location) })
+            if (locations.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Cargando ubicaciones...")
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp)
+                ) {
+                    items(locations) { location ->
+                        LocationItem(
+                            location = location,
+                            onClick = { onLocationSelected(location) }
+                        )
+                    }
                 }
             }
         },
@@ -504,7 +552,7 @@ fun LocationItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         color = Color.Transparent
     ) {
         Row(
@@ -532,10 +580,3 @@ fun LocationItem(
         }
     }
 }
-
-
-val sampleLocations = listOf(
-    Location("Centro Cultural", "Av. Principal 123", -27.467, -58.830),
-    Location("Parque Central", "Calle Falsa 456", -27.470, -58.825),
-    Location("Auditorio Municipal", "Av. Libertad 789", -27.471, -58.828)
-)
