@@ -196,7 +196,7 @@ fun PaginatedEventsResponse.toPaginatedEvents(): PaginatedEvents {
     return PaginatedEvents(
         page = page,
         size = size,
-        events = if (events.isNullOrEmpty()) emptyList() else events.map { it.toEvent() }
+        events = if (events.isNullOrEmpty()) emptyList() else events.map { it.toEventDetail() }
     )
 }
 

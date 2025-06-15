@@ -38,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.domain.model.Event
+import com.example.finalproyect.domain.model.EventDetail
 import com.example.finalproyect.presenter.navigator.Screen
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -245,7 +246,7 @@ fun SearchBar(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EventsContent(
-    events: List<Event>,
+    events: List<EventDetail>,
     isLoading: Boolean,
     error: String?,
     canLoadMore: Boolean,
@@ -291,7 +292,7 @@ fun EventsContent(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SearchContent(
-    searchResults: List<Event>,
+    searchResults: List<EventDetail>,
     isSearching: Boolean,
     searchError: String?,
     canLoadMore: Boolean,
@@ -443,7 +444,7 @@ fun EmptySearchMessage() {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventItem(event: Event, navController: NavHostController) {
+fun EventItem(event: EventDetail, navController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -451,8 +452,8 @@ fun EventItem(event: Event, navController: NavHostController) {
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
         onClick = {
-            Log.e("Errror",event.id.toString())
-            navController.navigate(Screen.EventDetails.createRoute(eventId = event.id.toString()))
+            Log.e("Errror",event.event.id.toString())
+            navController.navigate(Screen.EventDetails.createRoute(eventId = event.event.id.toString()))
         }
     ) {
         Box(
@@ -461,8 +462,8 @@ fun EventItem(event: Event, navController: NavHostController) {
                 .height(160.dp)
         ) {
             AsyncImage(
-                model = event.banner ?: "https://via.placeholder.com/400x200",
-                contentDescription = event.name,
+                model = event.event.banner ?: "https://via.placeholder.com/400x200",
+                contentDescription = event.event.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -486,7 +487,7 @@ fun EventItem(event: Event, navController: NavHostController) {
                     .padding(16.dp)
             ) {
                 Text(
-                    text = event.name,
+                    text = event.event.name,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold
                     ),
@@ -505,7 +506,7 @@ fun EventItem(event: Event, navController: NavHostController) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = formatDate(event.date),
+                        text = formatDate(event.event.date),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -517,7 +518,7 @@ fun EventItem(event: Event, navController: NavHostController) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = event.description ?: "",
+                text = event.event.description ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
@@ -541,11 +542,11 @@ fun EventItem(event: Event, navController: NavHostController) {
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    /*Text(
-                        text = event.locationName,
+                    Text(
+                        text = event.location.name,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )*/
+                    )
                 }
             }
         }

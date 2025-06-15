@@ -26,6 +26,7 @@ class AuthRepositoryImpl @Inject constructor(
             val response = authApi.login(LoginRequest(email, password))
             preferenceManager.saveAuthToken(response.token)
             preferenceManager.saveCurrentUserEmail(response.email)
+            preferenceManager.saveCurrentUserID(response.userID)
 
             // Podríamos obtener más datos del usuario y guardarlos localmente
             Result.success(response.toAuthResult())
@@ -64,6 +65,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun logout() {
         preferenceManager.clearAuthToken()
         preferenceManager.clearCurrentUserEmail()
+        preferenceManager.clearCurrentUserID()
     }
 
     override fun isLoggedIn(): Flow<Boolean> {

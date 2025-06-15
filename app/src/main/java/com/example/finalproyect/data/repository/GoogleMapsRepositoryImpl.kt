@@ -6,8 +6,6 @@ import com.example.finalproyect.BuildConfig
 import com.example.finalproyect.data.remote.api.GoogleMapsApi
 import com.example.finalproyect.domain.model.GooglePlace
 import com.example.finalproyect.domain.repository.GoogleMapsRepository
-import com.example.finalproyect.utils.Constants
-import com.example.finalproyect.utils.Utils
 import javax.inject.Inject
 import javax.inject.Singleton
 

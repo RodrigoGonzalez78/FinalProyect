@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
 
 
 data class EventDetailResponse(
-    // Campos del evento directamente en la respuesta
+
     @SerializedName("id_event")
     val idEvent: Int,
     @SerializedName("id_location")
@@ -30,8 +30,6 @@ data class EventDetailResponse(
     val createdAt: String,
     @SerializedName("updated_at")
     val updatedAt: String,
-
-    // Location y organizers como campos separados
     @SerializedName("location")
     val location: LocationDto?,
     @SerializedName("organizers")

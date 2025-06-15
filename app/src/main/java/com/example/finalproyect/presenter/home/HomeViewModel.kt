@@ -3,6 +3,7 @@ package com.example.finalproyect.presenter.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.Event
+import com.example.finalproyect.domain.model.EventDetail
 import com.example.finalproyect.domain.usecase.event.GetUserEventsUseCase
 import com.example.finalproyect.domain.usecase.event.SearchPublicEventsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -122,8 +123,8 @@ class HomeViewModel @Inject constructor(
 
 // HomeUiState.kt
 data class HomeUiState(
-    val userEvents: List<Event> = emptyList(),
-    val searchResults: List<Event> = emptyList(),
+    val userEvents: List<EventDetail> = emptyList(),
+    val searchResults: List<EventDetail> = emptyList(),
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val error: String? = null,
