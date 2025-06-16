@@ -2,9 +2,11 @@ package com.example.finalproyect.di
 
 import com.example.finalproyect.data.repository.AuthRepositoryImpl
 import com.example.finalproyect.data.repository.EventRepositoryImpl
+import com.example.finalproyect.data.repository.TicketTypeRepositoryImpl
 import com.example.finalproyect.data.repository.UploadRepositoryImpl
 import com.example.finalproyect.domain.repository.AuthRepository
 import com.example.finalproyect.domain.repository.EventRepository
+import com.example.finalproyect.domain.repository.TicketTypeRepository
 import com.example.finalproyect.domain.repository.UploadRepository
 import dagger.Binds
 import dagger.Module
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     abstract fun bindUploadRepository(
         uploadRepositoryImpl: UploadRepositoryImpl
     ): UploadRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTicketTypeRepository(
+        ticketTypeRepositoryImpl: TicketTypeRepositoryImpl
+    ): TicketTypeRepository
 }

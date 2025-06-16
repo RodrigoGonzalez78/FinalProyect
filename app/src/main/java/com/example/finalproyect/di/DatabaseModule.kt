@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.finalproyect.data.local.dao.EventDao
 import com.example.finalproyect.data.local.dao.LocationDao
 import com.example.finalproyect.data.local.dao.OrganizerDao
+import com.example.finalproyect.data.local.dao.TicketTypeDao
 import com.example.finalproyect.data.local.dao.UserDao
 import com.example.finalproyect.data.local.database.AppDatabase
 import dagger.Module
@@ -52,5 +53,11 @@ object DatabaseModule {
     @Singleton
     fun provideOrganizerDao(database: AppDatabase): OrganizerDao {
         return database.organizerDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTicketTypeDao(database: AppDatabase): TicketTypeDao {
+        return database.ticketTypeDao()
     }
 }

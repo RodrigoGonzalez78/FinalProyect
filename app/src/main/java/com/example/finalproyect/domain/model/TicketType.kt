@@ -3,10 +3,10 @@ package com.example.finalproyect.domain.model
 import java.time.LocalDateTime
 
 data class TicketType(
-    val id: Long,
-    val eventId: Long,
+    val id: Int,
+    val eventId: Int,
     val name: String,
-    val description: String,
+    val description: String?,
     val available: Int,
     val sold: Int,
     val price: Double,
