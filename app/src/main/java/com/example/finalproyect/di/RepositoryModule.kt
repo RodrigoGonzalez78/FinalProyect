@@ -4,10 +4,12 @@ import com.example.finalproyect.data.repository.AuthRepositoryImpl
 import com.example.finalproyect.data.repository.EventRepositoryImpl
 import com.example.finalproyect.data.repository.TicketTypeRepositoryImpl
 import com.example.finalproyect.data.repository.UploadRepositoryImpl
+import com.example.finalproyect.data.repository.UserRepositoryImpl
 import com.example.finalproyect.domain.repository.AuthRepository
 import com.example.finalproyect.domain.repository.EventRepository
 import com.example.finalproyect.domain.repository.TicketTypeRepository
 import com.example.finalproyect.domain.repository.UploadRepository
+import com.example.finalproyect.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -41,4 +43,10 @@ abstract class RepositoryModule {
     abstract fun bindTicketTypeRepository(
         ticketTypeRepositoryImpl: TicketTypeRepositoryImpl
     ): TicketTypeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(
+        userRepositoryImpl: UserRepositoryImpl
+    ): UserRepository
 }

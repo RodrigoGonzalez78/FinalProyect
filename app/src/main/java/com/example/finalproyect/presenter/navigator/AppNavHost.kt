@@ -65,11 +65,13 @@ fun AppNavHost(
                 navController
             )
         }
+
         composable(Screen.Profile.route) {
             ProfileScreen(
                 navController
             )
         }
+
         composable(Screen.EventDetails.route, arguments = listOf(
             navArgument("eventId") {
                 type = NavType.StringType

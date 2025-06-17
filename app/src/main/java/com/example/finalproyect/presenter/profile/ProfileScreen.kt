@@ -43,7 +43,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
-
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,11 +60,11 @@ fun ProfileScreen(
     LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-            // viewModel.clearMessages()
+            viewModel.clearMessages()
         }
         uiState.successMessage?.let {
             snackbarHostState.showSnackbar(it)
-            //viewModel.clearMessages()
+            viewModel.clearMessages()
         }
     }
 
@@ -97,13 +96,21 @@ fun ProfileScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        viewModel.saveProfile()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = "Guardar"
-                        )
+                    IconButton(
+                        onClick = { viewModel.saveProfile() },
+                        enabled = !uiState.isLoading
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = "Guardar"
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -211,16 +218,16 @@ fun ProfileScreen(
                                 contentDescription = null
                             )
                         },
-                        isError = uiState.name.isBlank()
+                        isError = uiState.name.isBlank(),
+                        supportingText = {
+                            if (uiState.name.isBlank()) {
+                                Text(
+                                    text = "El nombre es obligatorio",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     )
-                    if (uiState.name.isBlank()) {
-                        Text(
-                            text = "El nombre es obligatorio",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
 
                     // Campo: Apellido
                     OutlinedTextField(
@@ -234,16 +241,16 @@ fun ProfileScreen(
                                 contentDescription = null
                             )
                         },
-                        isError = uiState.lastName.isBlank()
+                        isError = uiState.lastName.isBlank(),
+                        supportingText = {
+                            if (uiState.lastName.isBlank()) {
+                                Text(
+                                    text = "El apellido es obligatorio",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     )
-                    if (uiState.lastName.isBlank()) {
-                        Text(
-                            text = "El apellido es obligatorio",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
 
                     // Campo: Fecha de nacimiento (solo lectura + DatePicker)
                     OutlinedTextField(
@@ -268,16 +275,16 @@ fun ProfileScreen(
                                 )
                             }
                         },
-                        isError = uiState.birthday.isAfter(LocalDate.now().minusYears(18))
+                        isError = uiState.birthday.isAfter(LocalDate.now().minusYears(18)),
+                        supportingText = {
+                            if (uiState.birthday.isAfter(LocalDate.now().minusYears(18))) {
+                                Text(
+                                    text = "Debes ser mayor de 18 años",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     )
-                    if (uiState.birthday.isAfter(LocalDate.now().minusYears(18))) {
-                        Text(
-                            text = "Debes ser mayor de 18 años",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
                 }
             }
 
@@ -297,30 +304,28 @@ fun ProfileScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo: Correo electrónico
+                    // Campo: Correo electrónico (SOLO LECTURA)
                     OutlinedTextField(
                         value = uiState.email,
-                        onValueChange = { viewModel.onEmailChange(it) },
+                        onValueChange = { }, // No hacer nada ya que es solo lectura
                         label = { Text("Correo electrónico") },
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        readOnly = true, // Campo de solo lectura
+                        enabled = false, // Deshabilitado para indicar que no se puede editar
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Outlined.Email,
                                 contentDescription = null
                             )
                         },
-                        isError = !android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email)
-                            .matches()
+                        supportingText = {
+                            Text(
+                                text = "El correo electrónico no se puede modificar",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     )
-                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
-                        Text(
-                            text = "Formato de email inválido",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
 
                     // Campo: Teléfono
                     OutlinedTextField(
@@ -335,18 +340,25 @@ fun ProfileScreen(
                                 contentDescription = null
                             )
                         },
-                        isError = uiState.phone.isNotBlank().let {
-                            it && !uiState.phone.matches("^[+]?[0-9]{8,15}$".toRegex())
+                        isError = uiState.phone.isBlank() ||
+                                (uiState.phone.isNotBlank() && !uiState.phone.matches("^[+]?[0-9]{8,15}$".toRegex())),
+                        supportingText = {
+                            when {
+                                uiState.phone.isBlank() -> {
+                                    Text(
+                                        text = "El teléfono es obligatorio",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                                uiState.phone.isNotBlank() && !uiState.phone.matches("^[+]?[0-9]{8,15}$".toRegex()) -> {
+                                    Text(
+                                        text = "Formato de teléfono inválido (8-15 dígitos)",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
                         }
                     )
-                    if (uiState.phone.isNotBlank() && !uiState.phone.matches("^[+]?[0-9]{8,15}$".toRegex())) {
-                        Text(
-                            text = "Formato de teléfono inválido",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
                 }
             }
 
@@ -368,7 +380,8 @@ fun ProfileScreen(
                 ) {
                     Button(
                         onClick = { viewModel.onChangePasswordRequested() },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isLoading
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Lock,
@@ -393,6 +406,7 @@ fun ProfileScreen(
                 OutlinedButton(
                     onClick = { viewModel.onLogoutRequested() },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     )
@@ -409,6 +423,7 @@ fun ProfileScreen(
                 Button(
                     onClick = { viewModel.onDeleteAccountRequested() },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -482,8 +497,8 @@ fun ProfileScreen(
                         trailingIcon = {
                             IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
                                 Icon(
-                                    imageVector = if (showCurrentPassword) Icons.Default.Close else Icons.Default.Info,
-                                    contentDescription = null
+                                    imageVector = if (showCurrentPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (showCurrentPassword) "Ocultar contraseña" else "Mostrar contraseña"
                                 )
                             }
                         }
@@ -499,8 +514,8 @@ fun ProfileScreen(
                         trailingIcon = {
                             IconButton(onClick = { showNewPassword = !showNewPassword }) {
                                 Icon(
-                                    imageVector = if (showNewPassword) Icons.Default.Close else Icons.Default.Info,
-                                    contentDescription = null
+                                    imageVector = if (showNewPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (showNewPassword) "Ocultar contraseña" else "Mostrar contraseña"
                                 )
                             }
                         }
@@ -516,15 +531,18 @@ fun ProfileScreen(
                         trailingIcon = {
                             IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
                                 Icon(
-                                    imageVector = if (showConfirmPassword) Icons.Default.Close else Icons.Default.Info,
-                                    contentDescription = null
+                                    imageVector = if (showConfirmPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (showConfirmPassword) "Ocultar contraseña" else "Mostrar contraseña"
                                 )
                             }
                         },
                         isError = newPassword != confirmPassword && confirmPassword.isNotEmpty(),
                         supportingText = {
                             if (newPassword != confirmPassword && confirmPassword.isNotEmpty()) {
-                                Text("Las contraseñas no coinciden")
+                                Text(
+                                    text = "Las contraseñas no coinciden",
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         }
                     )
@@ -543,12 +561,24 @@ fun ProfileScreen(
                             && newPassword.isNotBlank()
                             && confirmPassword.isNotBlank()
                             && newPassword == confirmPassword
+                            && !uiState.isLoading
                 ) {
-                    Text("Cambiar")
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text("Cambiar")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onPasswordDialogDismissed() }) {
+                TextButton(
+                    onClick = { viewModel.onPasswordDialogDismissed() },
+                    enabled = !uiState.isLoading
+                ) {
                     Text("Cancelar")
                 }
             }
@@ -562,12 +592,26 @@ fun ProfileScreen(
             title = { Text("Cerrar sesión") },
             text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
             confirmButton = {
-                Button(onClick = { viewModel.performLogout() }) {
-                    Text("Sí, cerrar sesión")
+                Button(
+                    onClick = { viewModel.performLogout() },
+                    enabled = !uiState.isLoading
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text("Sí, cerrar sesión")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onLogoutDialogDismissed() }) {
+                TextButton(
+                    onClick = { viewModel.onLogoutDialogDismissed() },
+                    enabled = !uiState.isLoading
+                ) {
                     Text("Cancelar")
                 }
             }
@@ -587,16 +631,28 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = { viewModel.performDeleteAccount() },
+                    enabled = !uiState.isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
                     )
                 ) {
-                    Text("Sí, eliminar cuenta")
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onError
+                        )
+                    } else {
+                        Text("Sí, eliminar cuenta")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onDeleteAccountDialogDismissed() }) {
+                TextButton(
+                    onClick = { viewModel.onDeleteAccountDialogDismissed() },
+                    enabled = !uiState.isLoading
+                ) {
                     Text("Cancelar")
                 }
             }
@@ -604,7 +660,6 @@ fun ProfileScreen(
     }
 }
 
-// Reutilizamos el ProfileSection sin cambios
 @Composable
 fun ProfileSection(
     title: String,

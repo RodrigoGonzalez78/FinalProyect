@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.EventDetail
 import com.example.finalproyect.domain.usecase.auth.LoginUseCase
 import com.example.finalproyect.domain.usecase.event.GetEventDetailUseCase
+import com.example.finalproyect.domain.usecase.ticket_type.GetTicketTypesByEventUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EventDetailsViewModels @Inject constructor(
-    private val getEventDetailUseCase: GetEventDetailUseCase
+    private val getEventDetailUseCase: GetEventDetailUseCase,
+    private val getTicketTypesByEventUseCase: GetTicketTypesByEventUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EventDetailUiState())

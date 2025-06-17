@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "app_preferences")
 
 @Singleton
@@ -46,7 +47,7 @@ class PreferenceManager @Inject constructor(
         }
     }
 
-     fun getCurrentUserID():Flow<String> {
+    fun getCurrentUserID():Flow<String> {
         return context.dataStore.data.map { preferences ->
             preferences[currentUserIDKey] ?: ""
         }

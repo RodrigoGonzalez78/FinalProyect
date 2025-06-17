@@ -7,6 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.User
 import com.example.finalproyect.domain.usecase.auth.GetCurrentUserUseCase
+import com.example.finalproyect.domain.usecase.auth.LogoutUseCase
+import com.example.finalproyect.domain.usecase.user.ChangePasswordUseCase
+import com.example.finalproyect.domain.usecase.user.GetUserByIdUseCase
+import com.example.finalproyect.domain.usecase.user.UpdateUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,18 +21,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
-
-// 2) Crea el ViewModel que inyecta GetCurrentUserUseCase y (opcional) UpdateUserUseCase
 @HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 class ProfileViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    //private val updateUserUseCase: UpdateUserUseCase // asumo que existe para guardar cambios
+    private val updateUserUseCase: UpdateUserUseCase,
+    private val changePasswordUseCase: ChangePasswordUseCase,
+    private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     // Estado interno mutable
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    private var currentUserId: Int = 0
 
     init {
         // Al iniciar el ViewModel, arrancamos la carga del usuario actual
@@ -37,6 +43,7 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadCurrentUser() {
         viewModelScope.launch {
+
             getCurrentUserUseCase()
                 .onStart {
                     _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -51,12 +58,13 @@ class ProfileViewModel @Inject constructor(
                 }
                 .collect { user ->
                     if (user != null) {
+                        currentUserId = user.id
                         // Mapeamos los campos de User al ProfileUiState
                         _uiState.update {
                             it.copy(
                                 name = user.name,
                                 lastName = user.lastName,
-                                email = user.email,
+                                email = user.email, // Solo lectura
                                 phone = user.phone,
                                 birthday = user.birthday,
                                 imageUri = null,
@@ -76,7 +84,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // 3) Funciones para actualizar cada campo en el UI State
+    // Funciones para actualizar cada campo en el UI State
     fun onNameChange(newName: String) {
         _uiState.update { it.copy(name = newName, errorMessage = null, successMessage = null) }
     }
@@ -91,9 +99,8 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onEmailChange(newEmail: String) {
-        _uiState.update { it.copy(email = newEmail, errorMessage = null, successMessage = null) }
-    }
+    // Email no se puede cambiar, así que removemos esta función
+    // fun onEmailChange(newEmail: String) { ... }
 
     fun onPhoneChange(newPhone: String) {
         _uiState.update { it.copy(phone = newPhone, errorMessage = null, successMessage = null) }
@@ -113,7 +120,7 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { it.copy(imageUri = newUri, errorMessage = null, successMessage = null) }
     }
 
-    // 4) Método para guardar los cambios: llama a UpdateUserUseCase
+    // Método para guardar los cambios: llama a UpdateUserUseCase
     fun saveProfile() {
         val current = _uiState.value
 
@@ -135,17 +142,14 @@ class ProfileViewModel @Inject constructor(
             }
 
             try {
-                // Asumo que UpdateUserUseCase recibe un objeto User o similar
-                val userToUpdate = User(
+                val result = updateUserUseCase(
+                    userId = currentUserId,
                     name = current.name,
                     lastName = current.lastName,
-                    email = current.email,
-                    phone = current.phone,
                     birthday = current.birthday,
-                    id = 0,
+                    phone = current.phone
                 )
 
-                /*val result = updateUserUseCase(userToUpdate)
                 result.fold(
                     onSuccess = {
                         _uiState.update {
@@ -163,7 +167,7 @@ class ProfileViewModel @Inject constructor(
                             )
                         }
                     }
-                )*/
+                )
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -176,19 +180,19 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onChangePasswordRequested() {
-        TODO("Not yet implemented")
+        _uiState.update { it.copy(isChangingPassword = true) }
     }
 
     fun onLogoutRequested() {
-        TODO("Not yet implemented")
+        _uiState.update { it.copy(isLoggingOut = true) }
     }
 
     fun onDeleteAccountRequested() {
-        TODO("Not yet implemented")
+        _uiState.update { it.copy(isDeletingAccount = true) }
     }
 
     fun onPasswordDialogDismissed() {
-        TODO("Not yet implemented")
+        _uiState.update { it.copy(isChangingPassword = false) }
     }
 
     fun onChangePasswordConfirm(
@@ -196,35 +200,123 @@ class ProfileViewModel @Inject constructor(
         newPassword: String,
         confirmPassword: String
     ) {
+        if (newPassword != confirmPassword) {
+            _uiState.update {
+                it.copy(errorMessage = "Las contraseñas no coinciden")
+            }
+            return
+        }
 
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    successMessage = null
+                )
+            }
+
+            try {
+                val result = changePasswordUseCase(
+                    userId = currentUserId,
+                    oldPassword = currentPassword,
+                    newPassword = newPassword
+                )
+
+                result.fold(
+                    onSuccess = {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isChangingPassword = false,
+                                successMessage = "Contraseña cambiada correctamente"
+                            )
+                        }
+                    },
+                    onFailure = { ex ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = ex.message ?: "Error al cambiar contraseña"
+                            )
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = e.message ?: "Error desconocido"
+                    )
+                }
+            }
+        }
     }
 
     fun onDeleteAccountDialogDismissed() {
-        TODO("Not yet implemented")
+        _uiState.update { it.copy(isDeletingAccount = false) }
     }
 
     fun performDeleteAccount() {
-        TODO("Not yet implemented")
+        // Implementación pendiente - requiere un DeleteAccountUseCase
+        _uiState.update {
+            it.copy(
+                isDeletingAccount = false,
+                errorMessage = "Funcionalidad de eliminar cuenta no implementada aún"
+            )
+        }
     }
 
     fun onLogoutDialogDismissed() {
-        TODO("Not yet implemented")
+        _uiState.update { it.copy(isLoggingOut = false) }
     }
 
     fun performLogout() {
-        TODO("Not yet implemented")
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    successMessage = null
+                )
+            }
+
+            try {
+                logoutUseCase()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isLoggingOut = false,
+                        successMessage = "Sesión cerrada correctamente"
+                    )
+                }
+                // Aquí deberías navegar a la pantalla de login
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = e.message ?: "Error al cerrar sesión"
+                    )
+                }
+            }
+        }
+    }
+
+    fun clearMessages() {
+        _uiState.update {
+            it.copy(errorMessage = null, successMessage = null)
+        }
     }
 }
 
-
-// 1) Define primero el UI State
+// UI State actualizado
 @RequiresApi(Build.VERSION_CODES.O)
 data class ProfileUiState constructor(
     val name: String = "",
     val lastName: String = "",
-    val email: String = "",
+    val email: String = "", // Solo lectura
     val phone: String = "",
-    val birthday: LocalDate = LocalDate.now(),
+    val birthday: LocalDate = LocalDate.now().minusYears(18),
     val imageUri: Uri? = null,
 
     val isLoading: Boolean = false,
@@ -232,13 +324,12 @@ data class ProfileUiState constructor(
     val successMessage: String? = null,
     val isChangingPassword: Boolean = false,
     val isLoggingOut: Boolean = false,
-    val isDeletingAccount: Boolean=false
+    val isDeletingAccount: Boolean = false
 ) {
-
-
-
-
     fun hasBasicInfoErrors(): Boolean {
-        return name.isBlank() || lastName.isBlank() || email.isBlank()
+        return name.isBlank() ||
+                lastName.isBlank() ||
+                phone.isBlank() ||
+                birthday.isAfter(LocalDate.now().minusYears(18))
     }
 }
