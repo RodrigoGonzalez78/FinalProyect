@@ -5,10 +5,9 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.finalproyect.domain.model.User
-import com.example.finalproyect.domain.usecase.auth.GetCurrentUserUseCase
 import com.example.finalproyect.domain.usecase.auth.LogoutUseCase
 import com.example.finalproyect.domain.usecase.user.ChangePasswordUseCase
+import com.example.finalproyect.domain.usecase.user.GetCurrentUserUseCase
 import com.example.finalproyect.domain.usecase.user.GetUserByIdUseCase
 import com.example.finalproyect.domain.usecase.user.UpdateUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +20,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+
+
 @HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 class ProfileViewModel @Inject constructor(
@@ -43,44 +44,54 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadCurrentUser() {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            getCurrentUserUseCase()
-                .onStart {
-                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-                }
-                .catch { throwable ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = "No se pudo cargar el perfil: ${throwable.message}"
-                        )
-                    }
-                }
-                .collect { user ->
-                    if (user != null) {
-                        currentUserId = user.id
-                        // Mapeamos los campos de User al ProfileUiState
+            try {
+                val result = getCurrentUserUseCase()
+
+                result.fold(
+                    onSuccess = { user ->
+                        if (user != null) {
+                            currentUserId = user.id
+                            // Mapeamos los campos de User al ProfileUiState
+                            _uiState.update {
+                                it.copy(
+                                    name = user.name,
+                                    lastName = user.lastName,
+                                    email = user.email, // Solo lectura
+                                    phone = user.phone,
+                                    birthday = user.birthday,
+                                    imageUri = null,
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+                            }
+                        } else {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    errorMessage = "Usuario no encontrado"
+                                )
+                            }
+                        }
+                    },
+                    onFailure = { throwable ->
                         _uiState.update {
                             it.copy(
-                                name = user.name,
-                                lastName = user.lastName,
-                                email = user.email, // Solo lectura
-                                phone = user.phone,
-                                birthday = user.birthday,
-                                imageUri = null,
                                 isLoading = false,
-                                errorMessage = null
-                            )
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = "Usuario no encontrado"
+                                errorMessage = "No se pudo cargar el perfil: ${throwable.message}"
                             )
                         }
                     }
+                )
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Error inesperado: ${e.message}"
+                    )
                 }
+            }
         }
     }
 
@@ -99,9 +110,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // Email no se puede cambiar, así que removemos esta función
-    // fun onEmailChange(newEmail: String) { ... }
-
     fun onPhoneChange(newPhone: String) {
         _uiState.update { it.copy(phone = newPhone, errorMessage = null, successMessage = null) }
     }
@@ -118,6 +126,11 @@ class ProfileViewModel @Inject constructor(
 
     fun onImageUriChange(newUri: Uri?) {
         _uiState.update { it.copy(imageUri = newUri, errorMessage = null, successMessage = null) }
+    }
+
+    // Método para recargar el perfil del usuario
+    fun refreshProfile() {
+        loadCurrentUser()
     }
 
     // Método para guardar los cambios: llama a UpdateUserUseCase
@@ -158,6 +171,8 @@ class ProfileViewModel @Inject constructor(
                                 successMessage = "Perfil actualizado correctamente"
                             )
                         }
+                        // Recargar los datos del usuario después de la actualización
+                        loadCurrentUser()
                     },
                     onFailure = { ex ->
                         _uiState.update {

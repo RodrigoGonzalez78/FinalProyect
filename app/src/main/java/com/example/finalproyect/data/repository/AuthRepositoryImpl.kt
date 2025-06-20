@@ -71,14 +71,4 @@ class AuthRepositoryImpl @Inject constructor(
     override fun isLoggedIn(): Flow<Boolean> {
         return preferenceManager.getAuthToken().map { it.isNotEmpty() }
     }
-
-    override fun getCurrentUser(): Flow<User?> {
-        return preferenceManager.getCurrentUserEmail().map { email ->
-            if (email.isEmpty()) {
-                null
-            } else {
-                userDao.getUserByEmail(email)?.toUser()
-            }
-        }
-    }
 }
