@@ -3,13 +3,22 @@ package com.example.finalproyect.domain.model
 import java.time.LocalDateTime
 
 data class Organizer(
-    val id: Long,
-    val eventId: Long,
-    val rolId: Long,
-    val userId: Long,
+    val id: Int,
+    val eventId: Int,
+    val roleId: Int,
+    val userId: Int,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-    // Información adicional del organizador
-    val name: String,
-    val lastName: String
-)
+    val name: String? = null,
+    val lastName: String? = null
+) {
+    val isMainAdmin: Boolean
+        get() = roleId == 1
+
+    val fullName: String
+        get() = if (name != null && lastName != null) {
+            "$name $lastName"
+        } else {
+            "Usuario #$userId"
+        }
+}

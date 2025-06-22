@@ -2,11 +2,15 @@ package com.example.finalproyect.di
 
 import com.example.finalproyect.data.repository.AuthRepositoryImpl
 import com.example.finalproyect.data.repository.EventRepositoryImpl
+import com.example.finalproyect.data.repository.OrganizerRepositoryImpl
+import com.example.finalproyect.data.repository.TicketRepositoryImpl
 import com.example.finalproyect.data.repository.TicketTypeRepositoryImpl
 import com.example.finalproyect.data.repository.UploadRepositoryImpl
 import com.example.finalproyect.data.repository.UserRepositoryImpl
 import com.example.finalproyect.domain.repository.AuthRepository
 import com.example.finalproyect.domain.repository.EventRepository
+import com.example.finalproyect.domain.repository.OrganizerRepository
+import com.example.finalproyect.domain.repository.TicketRepository
 import com.example.finalproyect.domain.repository.TicketTypeRepository
 import com.example.finalproyect.domain.repository.UploadRepository
 import com.example.finalproyect.domain.repository.UserRepository
@@ -43,6 +47,18 @@ abstract class RepositoryModule {
     abstract fun bindTicketTypeRepository(
         ticketTypeRepositoryImpl: TicketTypeRepositoryImpl
     ): TicketTypeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTicketRepository(
+        ticketRepositoryImpl: TicketRepositoryImpl
+    ): TicketRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOrganizerRepository(
+        organizerRepositoryImpl: OrganizerRepositoryImpl
+    ): OrganizerRepository
 
     @Binds
     @Singleton

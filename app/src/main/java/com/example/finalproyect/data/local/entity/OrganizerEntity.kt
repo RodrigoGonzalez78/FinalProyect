@@ -9,16 +9,16 @@ import java.time.LocalDateTime
 data class OrganizerEntity(
     @PrimaryKey
     @ColumnInfo(name = "id_organizer")
-    val idOrganizer: Int,
+    val id: Int,
 
     @ColumnInfo(name = "id_event")
-    val idEvent: Int,
+    val eventId: Int,
 
     @ColumnInfo(name = "id_rol")
-    val idRol: Int,
+    val roleId: Int,
 
     @ColumnInfo(name = "id_user")
-    val idUser: Int,
+    val userId: Int,
 
     @ColumnInfo(name = "created_at")
     val createdAt: LocalDateTime,
@@ -27,8 +27,8 @@ data class OrganizerEntity(
     val updatedAt: LocalDateTime,
 
     @ColumnInfo(name = "name")
-    val name: String,
+    val name: String? = null,
 
     @ColumnInfo(name = "last_name")
-    val lastName: String
+    val lastName: String? = null
 )

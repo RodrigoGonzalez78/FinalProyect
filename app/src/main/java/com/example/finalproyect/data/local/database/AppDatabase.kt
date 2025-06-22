@@ -6,11 +6,13 @@ import androidx.room.TypeConverters
 import com.example.finalproyect.data.local.dao.EventDao
 import com.example.finalproyect.data.local.dao.LocationDao
 import com.example.finalproyect.data.local.dao.OrganizerDao
+import com.example.finalproyect.data.local.dao.TicketDao
 import com.example.finalproyect.data.local.dao.TicketTypeDao
 import com.example.finalproyect.data.local.dao.UserDao
 import com.example.finalproyect.data.local.entity.EventEntity
 import com.example.finalproyect.data.local.entity.LocationEntity
 import com.example.finalproyect.data.local.entity.OrganizerEntity
+import com.example.finalproyect.data.local.entity.TicketEntity
 import com.example.finalproyect.data.local.entity.TicketTypeEntity
 import com.example.finalproyect.data.local.entity.UserEntity
 
@@ -20,7 +22,9 @@ import com.example.finalproyect.data.local.entity.UserEntity
         EventEntity::class,
         LocationEntity::class,
         OrganizerEntity::class,
-        TicketTypeEntity::class
+        TicketTypeEntity::class,
+        TicketEntity::class
+
     ],
     version = 1,
     exportSchema = false
@@ -32,4 +36,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun locationDao(): LocationDao
     abstract fun organizerDao(): OrganizerDao
     abstract fun ticketTypeDao(): TicketTypeDao
+
+    abstract fun ticketDao(): TicketDao
 }

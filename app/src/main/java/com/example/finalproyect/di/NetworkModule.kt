@@ -2,6 +2,8 @@ package com.example.finalproyect.di
 
 import com.example.finalproyect.data.remote.api.AuthApi
 import com.example.finalproyect.data.remote.api.EventApi
+import com.example.finalproyect.data.remote.api.OrganizerApi
+import com.example.finalproyect.data.remote.api.TicketApi
 import com.example.finalproyect.data.remote.api.TicketTypeApi
 import com.example.finalproyect.data.remote.api.UploadApi
 import com.example.finalproyect.data.remote.api.UserApi
@@ -94,6 +96,17 @@ object NetworkModule {
         return retrofit.create(TicketTypeApi::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideOrganizerApi(retrofit: Retrofit): OrganizerApi {
+        return retrofit.create(OrganizerApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTicketApi(retrofit: Retrofit): TicketApi {
+        return retrofit.create(TicketApi::class.java)
+    }
 
     @Provides
     @Singleton
