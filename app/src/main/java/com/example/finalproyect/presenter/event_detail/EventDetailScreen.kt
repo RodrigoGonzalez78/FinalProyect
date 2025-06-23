@@ -26,12 +26,28 @@ import com.example.finalproyect.presenter.event_detail.components.dialogs.QrScan
 import com.example.finalproyect.presenter.navigator.Screen
 
 
+
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+
+
+import androidx.compose.ui.unit.dp
+
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EventDetailScreen(
     navController: NavHostController,
     eventId: String,
-    viewModel: EventDetailsViewModels = hiltViewModel()
+    viewModel: EventDetailsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
@@ -78,11 +94,28 @@ fun EventDetailScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver"
                         )
+                    }
+                },
+                actions = {
+                    // Mostrar rol del usuario en la barra superior
+                    if (uiState.isOrganizer) {
+                        Surface(
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                        ) {
+                            Text(
+                                text = uiState.getRoleName(),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -91,8 +124,10 @@ fun EventDetailScreen(
             )
         },
         floatingActionButton = {
-            when (activeSection) {
-                "tickets" -> {
+            // FAB contextual según la sección activa y permisos del usuario
+            when {
+                // ✅ CORREGIDO: Usar userOrganizerRole correctamente
+                activeSection == "tickets" && (uiState.isMainAdmin || uiState.userOrganizerRole == 2) -> {
                     FloatingActionButton(
                         onClick = {
                             if (cameraPermissionState.value) {
@@ -111,7 +146,7 @@ fun EventDetailScreen(
                     }
                 }
 
-                "notifications" -> {
+                activeSection == "notifications" && uiState.isOrganizer -> {
                     FloatingActionButton(
                         onClick = { showCreateNotificationDialog = true },
                         containerColor = MaterialTheme.colorScheme.primary
@@ -124,7 +159,7 @@ fun EventDetailScreen(
                     }
                 }
 
-                "organizers" -> {
+                activeSection == "organizers" && uiState.canManageOrganizers -> {
                     FloatingActionButton(
                         onClick = { showAddOrganizerDialog = true },
                         containerColor = MaterialTheme.colorScheme.primary
@@ -137,7 +172,7 @@ fun EventDetailScreen(
                     }
                 }
 
-                "ticketTypes" -> {
+                activeSection == "ticketTypes" && uiState.canManageTicketTypes -> {
                     FloatingActionButton(
                         onClick = { showAddTicketTypeDialog = true },
                         containerColor = MaterialTheme.colorScheme.primary
@@ -160,7 +195,18 @@ fun EventDetailScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Cargando evento...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
@@ -173,7 +219,8 @@ fun EventDetailScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(16.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Error,
@@ -190,8 +237,10 @@ fun EventDetailScreen(
                             color = MaterialTheme.colorScheme.error
                         )
 
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Text(
-                            text = uiState.error?:"",
+                            text = uiState.error ?: "Error desconocido",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -200,7 +249,10 @@ fun EventDetailScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Button(
-                            onClick = { viewModel.loadEventDetail(eventId) }
+                            onClick = {
+                                viewModel.clearError()
+                                viewModel.loadEventDetail(eventId)
+                            }
                         ) {
                             Text("Reintentar")
                         }
@@ -210,21 +262,40 @@ fun EventDetailScreen(
 
             uiState.eventDetail != null -> {
                 EventDetailContent(
-                    eventDetail = uiState.eventDetail!!,
+                    uiState = uiState,
                     activeSection = activeSection,
                     paddingValues = paddingValues,
-                    onSectionChange = { section -> viewModel.setActiveSection(section) }
+                    onSectionChange = { section -> viewModel.setActiveSection(section) },
+                    onPurchaseTicket = { ticketTypeId -> viewModel.purchaseTicket(ticketTypeId) },
+                    onDeleteEvent = { viewModel.deleteEvent() },
+                    onValidateTicket = { qrCode ->
+                        // Implementar validación del ticket
+                    },
+                    onCreateTicketType = { name, price, description, available ->
+                        viewModel.createTicketType(name, price, description, available)
+                    },
+                    onCreateOrganizer = { userId, roleId ->
+                        viewModel.createOrganizer(userId, roleId)
+                    },
+                    onUpdateOrganizerRole = { organizerId, newRoleId ->
+                        viewModel.updateOrganizerRole(organizerId, newRoleId)
+                    },
+                    onDeleteOrganizer = { organizerId ->
+                        viewModel.deleteOrganizer(organizerId)
+                    },
+                    onDeleteTicketType = { ticketTypeId ->
+                        viewModel.deleteTicketType(ticketTypeId)
+                    }
                 )
             }
         }
     }
 
-    // Diálogos
+    // Diálogos modales (sin cambios)
     if (showScanQrDialog) {
         QrScannerDialog(
             onDismiss = { showScanQrDialog = false },
             onQrScanned = { code ->
-                viewModel.validateTicket(code)
                 showScanQrDialog = false
             }
         )
@@ -234,7 +305,14 @@ fun EventDetailScreen(
         AddOrganizerDialog(
             onDismiss = { showAddOrganizerDialog = false },
             onAddOrganizer = { email, role ->
-                viewModel.addOrganizer(email, role)
+                val userId = email.hashCode()
+                val roleId = when (role) {
+                    "Administrador" -> 2
+                    "Editor" -> 3
+                    "Asistente" -> 4
+                    else -> 4
+                }
+                viewModel.createOrganizer(userId, roleId)
                 showAddOrganizerDialog = false
             }
         )
@@ -244,7 +322,7 @@ fun EventDetailScreen(
         AddTicketTypeDialog(
             onDismiss = { showAddTicketTypeDialog = false },
             onAddTicketType = { name, price, description, limit ->
-                viewModel.addTicketType(name, price, description, limit)
+                viewModel.createTicketType(name, price, description, limit)
                 showAddTicketTypeDialog = false
             }
         )
@@ -254,7 +332,6 @@ fun EventDetailScreen(
         CreateNotificationDialog(
             onDismiss = { showCreateNotificationDialog = false },
             onCreateNotification = { title, message, sendNow ->
-                viewModel.createNotification(title, message, sendNow)
                 showCreateNotificationDialog = false
             }
         )

@@ -11,10 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.finalproyect.presenter.event_detail.EventDetailUiState
 
 
 @Composable
-fun NotificationsSection() {
+fun NotificationsSection(uiState: EventDetailUiState) {
     Column(
         modifier = Modifier
             .fillMaxSize()

@@ -248,10 +248,10 @@ fun EventDetailResponse.toEventDetail(): EventDetail {
 @RequiresApi(Build.VERSION_CODES.O)
 fun OrganizerResponseDto.toOrganizerResponse(): OrganizerResponse {
     return OrganizerResponse(
-        idOrganizer = idOrganizer,
-        idEvent = idEvent,
-        idRol = idRol,
-        idUser = idUser,
+        idOrganizer = idOrganizer.toInt(),
+        idEvent = idEvent.toInt(),
+        idRol = idRol.toInt(),
+        idUser = idUser.toInt(),
         createdAt = createdAt.parseIsoDateTime(),
         updatedAt = updatedAt.parseIsoDateTime(),
         name = name,
