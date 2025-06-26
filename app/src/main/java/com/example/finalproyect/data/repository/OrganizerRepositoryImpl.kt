@@ -20,12 +20,12 @@ class OrganizerRepositoryImpl @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createOrganizer(
         eventId: Int,
-        userId: Int,
+        email: String,  // ← Cambiado de userId a email
         roleId: Int
     ): Result<Organizer> {
         return try {
             val request = CreateOrganizerRequest(
-                idUser = userId,
+                email = email,  // ← Usar email en lugar de idUser
                 idRol = roleId
             )
 
@@ -43,8 +43,10 @@ class OrganizerRepositoryImpl @Inject constructor(
                 } ?: Result.failure(Exception("Empty response body"))
             } else {
                 val errorMessage = when (response.code()) {
-                    400 -> "Invalid data or attempt to assign main admin role"
-                    403 -> "Insufficient permissions to add organizers"
+                    400 -> "Email inválido o rol no permitido"
+                    403 -> "Sin permisos para agregar organizadores"
+                    404 -> "Usuario no encontrado con ese email"
+                    409 -> "El usuario ya es organizador de este evento"
                     else -> "Error: ${response.code()} - ${response.message()}"
                 }
                 Result.failure(Exception(errorMessage))

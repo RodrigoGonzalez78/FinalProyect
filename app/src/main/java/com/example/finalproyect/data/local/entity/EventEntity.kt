@@ -25,7 +25,7 @@ data class EventEntity(
     val id: Long,
 
     @ColumnInfo(name = "user_id")
-    val userId: String, // ← agregado, requerido por queries del DAO
+    val userId: String,
 
     @ColumnInfo(name = "locationId", index = true)
     val locationId: Long,

@@ -6,7 +6,7 @@ import com.example.finalproyect.domain.model.Organizer
 interface OrganizerRepository {
     suspend fun createOrganizer(
         eventId: Int,
-        userId: Int,
+        email: String,
         roleId: Int
     ): Result<Organizer>
 

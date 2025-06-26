@@ -24,7 +24,8 @@ fun EventDetailContent(
     onDeleteEvent: () -> Unit = {},
     onValidateTicket: (String) -> Unit = {},
     onCreateTicketType: (String, Double, String?, Int) -> Unit = { _, _, _, _ -> },
-    onCreateOrganizer: (Int, Int) -> Unit = { _, _ -> },
+    onUpdateTicketType: (Int, String, Double, String?, Int) -> Unit = { _, _, _, _, _ -> },
+    onCreateOrganizer: (String, Int) -> Unit = { _, _ -> },
     onUpdateOrganizerRole: (Int, Int) -> Unit = { _, _ -> },
     onDeleteOrganizer: (Int) -> Unit = {},
     onDeleteTicketType: (Int) -> Unit = {}
@@ -43,7 +44,7 @@ fun EventDetailContent(
             onDeleteEvent = onDeleteEvent
         )
 
-        // Navegación por tabs - solo mostrar las que corresponden al rol
+        // Navegación por tabs
         EventNavigationTabs(
             uiState = uiState,
             activeSection = activeSection,
@@ -77,9 +78,11 @@ fun EventDetailContent(
                 "ticketTypes" -> TicketTypesSection(
                     uiState = uiState,
                     onCreateTicketType = onCreateTicketType,
+                    onUpdateTicketType = onUpdateTicketType,
                     onDeleteTicketType = onDeleteTicketType
                 )
             }
         }
     }
 }
+

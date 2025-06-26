@@ -12,6 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,10 +26,12 @@ import com.example.finalproyect.domain.model.Organizer
 @Composable
 fun OrganizersSection(
     uiState: EventDetailUiState,
-    onCreateOrganizer: (Int, Int) -> Unit,
+    onCreateOrganizer: (String, Int) -> Unit,
     onUpdateOrganizerRole: (Int, Int) -> Unit,
     onDeleteOrganizer: (Int) -> Unit
 ) {
+    var selectedOrganizerForEdit by remember { mutableStateOf<Organizer?>(null) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -81,12 +87,28 @@ fun OrganizersSection(
             items(uiState.organizers) { organizer ->
                 OrganizerItem(
                     organizer = organizer,
-                    canEdit = uiState.canManageOrganizers,
-                    onEdit = { /* Implementar edición */ },
+                    canEdit = uiState.canManageOrganizers && !organizer.isMainAdmin,
+                    onEdit = { selectedOrganizerForEdit = organizer },
                     onDelete = { onDeleteOrganizer(organizer.id) }
                 )
             }
         }
+    }
+
+    // Diálogo para editar organizador
+    selectedOrganizerForEdit?.let { organizer ->
+        EditOrganizerDialog(
+            organizer = organizer,
+            onDismiss = { selectedOrganizerForEdit = null },
+            onUpdateRole = { newRoleId ->
+                onUpdateOrganizerRole(organizer.id, newRoleId)
+                selectedOrganizerForEdit = null
+            },
+            onDelete = {
+                onDeleteOrganizer(organizer.id)
+                selectedOrganizerForEdit = null
+            }
+        )
     }
 }
 
@@ -118,7 +140,7 @@ private fun OrganizerItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = organizer.fullName.first().toString(),
+                    text = organizer.fullName.firstOrNull()?.toString()?.uppercase() ?: "?",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -143,12 +165,14 @@ private fun OrganizerItem(
                     color = when (organizer.roleId) {
                         1 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         2 -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                        else -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                        3 -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                     },
                     contentColor = when (organizer.roleId) {
                         1 -> MaterialTheme.colorScheme.primary
                         2 -> MaterialTheme.colorScheme.secondary
-                        else -> MaterialTheme.colorScheme.tertiary
+                        3 -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.outline
                     },
                     modifier = Modifier.wrapContentWidth()
                 ) {
@@ -166,13 +190,19 @@ private fun OrganizerItem(
                 }
             }
 
-            if (canEdit && !organizer.isMainAdmin) {
-                IconButton(onClick = onEdit) {
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "Editar permisos",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+            if (canEdit) {
+                Row {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = "Editar organizador",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

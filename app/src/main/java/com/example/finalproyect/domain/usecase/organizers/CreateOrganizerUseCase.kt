@@ -10,15 +10,18 @@ class CreateOrganizerUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         eventId: Int,
-        userId: Int,
+        email: String,  // ← Cambiado de userId a email
         roleId: Int
     ): Result<Organizer> {
         // Validaciones
         if (eventId <= 0) {
             return Result.failure(Exception("Invalid event ID"))
         }
-        if (userId <= 0) {
-            return Result.failure(Exception("Invalid user ID"))
+        if (email.isBlank()) {
+            return Result.failure(Exception("Email cannot be empty"))
+        }
+        if (!isValidEmail(email)) {
+            return Result.failure(Exception("Invalid email format"))
         }
         if (roleId <= 0) {
             return Result.failure(Exception("Invalid role ID"))
@@ -27,16 +30,15 @@ class CreateOrganizerUseCase @Inject constructor(
             return Result.failure(Exception("Cannot assign main admin role through this method"))
         }
 
-        // Verificar si el usuario ya es organizador del evento
-        val isAlreadyOrganizer = organizerRepository.isUserOrganizerOfEvent(eventId, userId)
-        if (isAlreadyOrganizer.isSuccess && isAlreadyOrganizer.getOrNull() == true) {
-            return Result.failure(Exception("User is already an organizer of this event"))
-        }
-
         return organizerRepository.createOrganizer(
             eventId = eventId,
-            userId = userId,
+            email = email,  // ← Usar email en lugar de userId
             roleId = roleId
         )
     }
+
+    private fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
 }
+

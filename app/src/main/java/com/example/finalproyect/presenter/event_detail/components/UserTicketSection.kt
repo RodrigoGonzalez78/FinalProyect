@@ -164,13 +164,13 @@ private fun UserTicketCard(
                             Image(
                                 painter = BitmapPainter(qrBitmap.asImageBitmap()),
                                 contentDescription = "Código QR",
-                                modifier = Modifier.size(120.dp)
+                                modifier = Modifier.size(200.dp)
                             )
                         }else{
                             Icon(
                                 imageVector = Icons.Outlined.QrCode,
                                 contentDescription = "Código QR",
-                                modifier = Modifier.size(120.dp),
+                                modifier = Modifier.size(200.dp),
                                 tint = Color.Black
                             )
                         }

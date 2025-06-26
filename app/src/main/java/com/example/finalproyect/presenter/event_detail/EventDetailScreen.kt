@@ -18,29 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.example.finalproyect.presenter.event_detail.components.organizer_section.AddOrganizerDialog
 import com.example.finalproyect.presenter.event_detail.components.ticket_type_section.AddTicketTypeDialog
 import com.example.finalproyect.presenter.event_detail.components.notification_section.CreateNotificationDialog
 import com.example.finalproyect.presenter.event_detail.components.EventDetailContent
-import com.example.finalproyect.presenter.event_detail.components.dialogs.QrScannerDialog
-import com.example.finalproyect.presenter.navigator.Screen
-
-
-
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
-
-
-import androidx.compose.ui.unit.dp
-
-import androidx.hilt.navigation.compose.hiltViewModel
-
+import com.example.finalproyect.presenter.event_detail.components.AddOrganizerDialog
+import com.example.finalproyect.presenter.event_detail.components.QrScannerDialog
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -126,7 +110,6 @@ fun EventDetailScreen(
         floatingActionButton = {
             // FAB contextual según la sección activa y permisos del usuario
             when {
-                // ✅ CORREGIDO: Usar userOrganizerRole correctamente
                 activeSection == "tickets" && (uiState.isMainAdmin || uiState.userOrganizerRole == 2) -> {
                     FloatingActionButton(
                         onClick = {
@@ -274,8 +257,11 @@ fun EventDetailScreen(
                     onCreateTicketType = { name, price, description, available ->
                         viewModel.createTicketType(name, price, description, available)
                     },
-                    onCreateOrganizer = { userId, roleId ->
-                        viewModel.createOrganizer(userId, roleId)
+                    onUpdateTicketType = { ticketTypeId, name, price, description, available ->
+                        viewModel.updateTicketType(ticketTypeId, name, price, description, available)
+                    },
+                    onCreateOrganizer = { email, roleId ->
+                        viewModel.createOrganizer(email, roleId)
                     },
                     onUpdateOrganizerRole = { organizerId, newRoleId ->
                         viewModel.updateOrganizerRole(organizerId, newRoleId)
@@ -291,29 +277,28 @@ fun EventDetailScreen(
         }
     }
 
-    // Diálogos modales (sin cambios)
-    if (showScanQrDialog) {
-        QrScannerDialog(
-            onDismiss = { showScanQrDialog = false },
-            onQrScanned = { code ->
-                showScanQrDialog = false
-            }
-        )
-    }
-
+    // Diálogos modales
     if (showAddOrganizerDialog) {
         AddOrganizerDialog(
             onDismiss = { showAddOrganizerDialog = false },
             onAddOrganizer = { email, role ->
-                val userId = email.hashCode()
                 val roleId = when (role) {
                     "Administrador" -> 2
                     "Editor" -> 3
                     "Asistente" -> 4
                     else -> 4
                 }
-                viewModel.createOrganizer(userId, roleId)
+                viewModel.createOrganizer(email, roleId)
                 showAddOrganizerDialog = false
+            }
+        )
+    }
+
+    if (showScanQrDialog) {
+        QrScannerDialog(
+            onDismiss = { showScanQrDialog = false },
+            onQrScanned = { code ->
+                showScanQrDialog = false
             }
         )
     }

@@ -89,7 +89,6 @@ class EventDetailsViewModel @Inject constructor(
                         loadUserTicket()
                     },
                     onFailure = { error ->
-                        Log.e("Fallo","Herror 1")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = error.message ?: "Error desconocido"
@@ -246,13 +245,13 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-    fun createOrganizer(userId: Int, roleId: Int) {
+    fun createOrganizer(email: String, roleId: Int) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isCreatingOrganizer = true)
 
             val result = createOrganizerUseCase(
                 eventId = currentEventId,
-                userId = userId,
+                email = email,
                 roleId = roleId
             )
 
@@ -404,7 +403,7 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-
+    // UTILITY METHODS
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

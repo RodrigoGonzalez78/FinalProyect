@@ -10,18 +10,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.finalproyect.domain.model.TicketType
-
 @Composable
 fun TicketTypesSection(
     uiState: EventDetailUiState,
     onCreateTicketType: (String, Double, String?, Int) -> Unit,
+    onUpdateTicketType: (Int, String, Double, String?, Int) -> Unit,
     onDeleteTicketType: (Int) -> Unit
 ) {
+    var selectedTicketTypeForEdit by remember { mutableStateOf<TicketType?>(null) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -78,10 +84,27 @@ fun TicketTypesSection(
                 TicketTypeItem(
                     ticketType = ticketType,
                     canEdit = uiState.canManageTicketTypes,
+                    onEdit = { selectedTicketTypeForEdit = ticketType },
                     onDelete = { onDeleteTicketType(ticketType.id) }
                 )
             }
         }
+    }
+
+    // Diálogo para editar tipo de ticket
+    selectedTicketTypeForEdit?.let { ticketType ->
+        EditTicketTypeDialog(
+            ticketType = ticketType,
+            onDismiss = { selectedTicketTypeForEdit = null },
+            onUpdateTicketType = { name, price, description, available ->
+                onUpdateTicketType(ticketType.id, name, price, description, available)
+                selectedTicketTypeForEdit = null
+            },
+            onDelete = {
+                onDeleteTicketType(ticketType.id)
+                selectedTicketTypeForEdit = null
+            }
+        )
     }
 }
 
@@ -89,6 +112,7 @@ fun TicketTypesSection(
 private fun TicketTypeItem(
     ticketType: TicketType,
     canEdit: Boolean,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -119,7 +143,7 @@ private fun TicketTypeItem(
                 )
             }
 
-            if (ticketType.description != null) {
+            if (ticketType.description != null && ticketType.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = ticketType.description,
@@ -135,35 +159,30 @@ private fun TicketTypeItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Disponibles: ${ticketType.available} | Vendidos: ${ticketType.sold}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column {
+                    Text(
+                        text = "Disponibles: ${ticketType.available}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Vendidos: ${ticketType.sold}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 if (canEdit) {
                     Row {
                         IconButton(
-                            onClick = { /* Editar tipo de entrada */ },
-                            modifier = Modifier.size(32.dp)
+                            onClick = onEdit,
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Edit,
                                 contentDescription = "Editar",
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onDelete,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Delete,
-                                contentDescription = "Eliminar",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
