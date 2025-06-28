@@ -22,7 +22,6 @@ import com.example.finalproyect.domain.model.TicketType
 @Composable
 fun TicketTypesSection(
     uiState: EventDetailUiState,
-    onCreateTicketType: (String, Double, String?, Int) -> Unit,
     onUpdateTicketType: (Int, String, Double, String?, Int) -> Unit,
     onDeleteTicketType: (Int) -> Unit
 ) {

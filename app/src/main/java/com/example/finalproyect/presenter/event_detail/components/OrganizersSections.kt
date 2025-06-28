@@ -26,7 +26,6 @@ import com.example.finalproyect.domain.model.Organizer
 @Composable
 fun OrganizersSection(
     uiState: EventDetailUiState,
-    onCreateOrganizer: (String, Int) -> Unit,
     onUpdateOrganizerRole: (Int, Int) -> Unit,
     onDeleteOrganizer: (Int) -> Unit
 ) {

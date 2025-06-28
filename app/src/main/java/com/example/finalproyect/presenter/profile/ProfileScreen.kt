@@ -107,7 +107,7 @@ fun ProfileScreen(
                             )
                         } else {
                             Icon(
-                                imageVector = Icons.Default.Done,
+                                imageVector = Icons.Default.Save,
                                 contentDescription = "Guardar"
                             )
                         }
@@ -304,28 +304,7 @@ fun ProfileScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo: Correo electrónico (SOLO LECTURA)
-                    OutlinedTextField(
-                        value = uiState.email,
-                        onValueChange = { }, // No hacer nada ya que es solo lectura
-                        label = { Text("Correo electrónico") },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true, // Campo de solo lectura
-                        enabled = false, // Deshabilitado para indicar que no se puede editar
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Email,
-                                contentDescription = null
-                            )
-                        },
-                        supportingText = {
-                            Text(
-                                text = "El correo electrónico no se puede modificar",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    )
+
 
                     // Campo: Teléfono
                     OutlinedTextField(
@@ -357,6 +336,29 @@ fun ProfileScreen(
                                     )
                                 }
                             }
+                        }
+                    )
+
+
+                    OutlinedTextField(
+                        value = uiState.email,
+                        onValueChange = { }, // No hacer nada ya que es solo lectura
+                        label = { Text("Correo electrónico") },
+                        modifier = Modifier.fillMaxWidth(),
+                        readOnly = true, // Campo de solo lectura
+                        enabled = false, // Deshabilitado para indicar que no se puede editar
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Email,
+                                contentDescription = null
+                            )
+                        },
+                        supportingText = {
+                            Text(
+                                text = "El correo electrónico no se puede modificar",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     )
                 }

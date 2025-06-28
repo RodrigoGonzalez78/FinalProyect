@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,12 +39,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.presenter.navigator.Screen
+import com.google.android.gms.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
+
 @RequiresApi(Build.VERSION_CODES.O)
+@androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION])
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewEventScreen(
@@ -56,6 +60,7 @@ fun NewEventScreen(
 
     // Snackbar host
     val snackbarHostState = remember { SnackbarHostState() }
+
 
     // Efectos para mostrar mensajes
     LaunchedEffect(uiState.errorMessage) {
@@ -81,6 +86,13 @@ fun NewEventScreen(
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
     var showLocationPicker by remember { mutableStateOf(false) }
+    var showMapPicker by remember { mutableStateOf(false) }
+
+    var userPos by remember { mutableStateOf<LatLng?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchLastKnownLocation { userPos = it }
+    }
 
     // Launcher para seleccionar imagen
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -244,14 +256,11 @@ fun NewEventScreen(
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(
-                        onClick = { showLocationPicker = true },
-                        enabled = !uiState.isLoading
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Seleccionar ubicación"
-                        )
+                    Row {
+                        IconButton(onClick = { showLocationPicker = true }) { /* lista */ }
+                        IconButton(onClick = { showMapPicker = true }) {
+                            Icon(Icons.Default.Map, contentDescription = "Mapa")
+                        }
                     }
                 },
                 isError = uiState.selectedLocation == null,
@@ -423,6 +432,15 @@ fun NewEventScreen(
             DatePicker(state = datePickerState)
         }
     }
+    if (showMapPicker) {
+        MapLocationPickerDialog(
+            initialPosition = userPos ?: LatLng(-27.467, -58.830),
+            onDismissRequest = { showMapPicker = false },
+            onLocationPicked = { loc ->
+                viewModel.onLocationSelected(loc)
+            }
+        )
+    }
 
     // TimePickerDialog para Hora de Inicio
     if (showStartTimePicker) {
@@ -458,18 +476,6 @@ fun NewEventScreen(
         ) {
             TimePicker(state = timePickerState)
         }
-    }
-
-    // LocationPickerDialog - Ahora usa las ubicaciones del ViewModel
-    if (showLocationPicker) {
-        LocationPickerDialog(
-            locations = locations,
-            onDismissRequest = { showLocationPicker = false },
-            onLocationSelected = { location ->
-                viewModel.onLocationSelected(location)
-                showLocationPicker = false
-            }
-        )
     }
 }
 

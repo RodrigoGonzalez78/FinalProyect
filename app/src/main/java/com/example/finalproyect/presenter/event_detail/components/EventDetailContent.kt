@@ -58,26 +58,25 @@ fun EventDetailContent(
                     uiState = uiState,
                     onValidateTicket = onValidateTicket
                 )
+
                 "tickets" -> {
-                    if (uiState.isMainAdmin || uiState.userOrganizerRole == 2) {
-                        TicketsValidationSection(uiState = uiState)
-                    } else {
+                    if (!(uiState.isMainAdmin || uiState.userOrganizerRole == 2)) {
                         UserTicketSection(
                             uiState = uiState,
                             onPurchaseTicket = onPurchaseTicket
                         )
                     }
                 }
+
                 "notifications" -> NotificationsSection(uiState = uiState)
                 "organizers" -> OrganizersSection(
                     uiState = uiState,
-                    onCreateOrganizer = onCreateOrganizer,
                     onUpdateOrganizerRole = onUpdateOrganizerRole,
                     onDeleteOrganizer = onDeleteOrganizer
                 )
+
                 "ticketTypes" -> TicketTypesSection(
                     uiState = uiState,
-                    onCreateTicketType = onCreateTicketType,
                     onUpdateTicketType = onUpdateTicketType,
                     onDeleteTicketType = onDeleteTicketType
                 )

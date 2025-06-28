@@ -1,8 +1,10 @@
 package com.example.finalproyect.presenter.new_event
 
+import android.Manifest
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.Event
@@ -10,6 +12,8 @@ import com.example.finalproyect.domain.repository.GoogleMapsRepository
 import com.example.finalproyect.domain.usecase.event.CreateEventUseCase
 import com.example.finalproyect.domain.usecase.event.UpdateEventUseCase
 import com.example.finalproyect.domain.usecase.upload.UploadImageUseCase
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +30,7 @@ import javax.inject.Inject
 class NewEventViewModel @Inject constructor(
     private val createEventUseCase: CreateEventUseCase,
     private val googleMapsRepository: GoogleMapsRepository,
+    private val locationProvider: FusedLocationProviderClient,
     private val uploadImageUseCase: UploadImageUseCase, // Inyectar el repositorio de Google Maps
 ) : ViewModel() {
 
@@ -67,12 +72,9 @@ class NewEventViewModel @Inject constructor(
                         }
                     },
                     onFailure = {
-                        // Fallback a ubicaciones de ejemplo si falla Google Maps
-                        _locations.value = sampleLocations
                     }
                 )
             } catch (e: Exception) {
-                _locations.value = sampleLocations
             }
         }
     }
@@ -185,6 +187,15 @@ class NewEventViewModel @Inject constructor(
         }
     }
 
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    fun fetchLastKnownLocation(onResult: (LatLng) -> Unit) {
+        locationProvider.lastLocation.addOnSuccessListener { loc ->
+            loc?.let {
+                onResult(LatLng(it.latitude, it.longitude))
+            }
+        }
+    }
+
     private suspend fun createEventWithImageUrl(imageUrl: String) {
         val current = _uiState.value
         val loc = current.selectedLocation!!
@@ -268,9 +279,3 @@ data class Location(
     val longitude: Double
 )
 
-// Ubicaciones de ejemplo como fallback
-val sampleLocations = listOf(
-    Location("Centro Cultural", "Av. Principal 123", -27.467, -58.830),
-    Location("Parque Central", "Calle Falsa 456", -27.470, -58.825),
-    Location("Auditorio Municipal", "Av. Libertad 789", -27.471, -58.828)
-)

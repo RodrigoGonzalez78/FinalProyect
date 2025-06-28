@@ -19,11 +19,10 @@ fun EventNavigationTabs(
         add(TabItem("overview", "General", Icons.Outlined.Dashboard))
 
         // Tab de tickets - diferente comportamiento según rol
-        if (uiState.isMainAdmin || uiState.userOrganizerRole == 2) {
-            add(TabItem("tickets", "Validación", Icons.Outlined.QrCodeScanner))
-        } else {
+        if (!(uiState.isMainAdmin || uiState.userOrganizerRole == 2)) {
             add(TabItem("tickets", "Mi Entrada", Icons.Outlined.ConfirmationNumber))
         }
+
         // Tabs solo para organizadores
         if (uiState.isOrganizer) {
             add(TabItem("notifications", "Avisos", Icons.Outlined.Notifications))
