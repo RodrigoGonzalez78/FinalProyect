@@ -54,7 +54,7 @@ fun HomeScreen(
     navController: NavHostController,
     viewModel: HomeViewModel = hiltViewModel(),
 
-) {
+    ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
@@ -149,6 +149,7 @@ fun HomeScreen(
                         )
                     }
                 }
+
                 "search" -> {
                     SearchContent(
                         searchResults = uiState.searchResults,
@@ -355,10 +356,6 @@ fun ErrorMessage(
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onRetry) {
-                Text("Reintentar")
-            }
         }
     }
 }
@@ -452,7 +449,7 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
         onClick = {
-            Log.e("Errror",event.event.id.toString())
+            Log.e("Errror", event.event.id.toString())
             navController.navigate(Screen.EventDetails.createRoute(eventId = event.event.id.toString()))
         }
     ) {
@@ -508,7 +505,8 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                     Text(
                         text = formatDate(event.event.date),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Color.White.copy(alpha = 0.8f),
+                        maxLines = 1
                     )
                 }
             }
@@ -521,7 +519,7 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                 text = event.event.description ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -545,7 +543,8 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                     Text(
                         text = event.location.name,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        maxLines = 1,
                     )
                 }
             }

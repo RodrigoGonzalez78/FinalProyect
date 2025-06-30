@@ -271,7 +271,8 @@ fun EventDetailScreen(
                     },
                     onDeleteTicketType = { ticketTypeId ->
                         viewModel.deleteTicketType(ticketTypeId)
-                    }
+                    },
+                    navController = navController
                 )
             }
         }

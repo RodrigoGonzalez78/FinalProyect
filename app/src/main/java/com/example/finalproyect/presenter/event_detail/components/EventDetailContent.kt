@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
 import com.example.finalproyect.presenter.event_detail.EventDetailUiState
 import com.example.finalproyect.presenter.event_detail.components.notification_section.NotificationsSection
 
@@ -16,6 +17,7 @@ import com.example.finalproyect.presenter.event_detail.components.notification_s
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EventDetailContent(
+    navController: NavHostController,
     uiState: EventDetailUiState,
     activeSection: String,
     paddingValues: PaddingValues,
@@ -56,7 +58,8 @@ fun EventDetailContent(
             when (activeSection) {
                 "overview" -> EventOverviewSection(
                     uiState = uiState,
-                    onValidateTicket = onValidateTicket
+                    onValidateTicket = onValidateTicket,
+                    navController = navController
                 )
 
                 "tickets" -> {

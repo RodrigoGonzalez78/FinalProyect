@@ -4,6 +4,7 @@ import com.example.finalproyect.data.repository.AuthRepositoryImpl
 import com.example.finalproyect.data.repository.EventRepositoryImpl
 import com.example.finalproyect.data.repository.OrganizerRepositoryImpl
 import com.example.finalproyect.data.repository.TicketRepositoryImpl
+import com.example.finalproyect.data.repository.TicketScanRepositoryImpl
 import com.example.finalproyect.data.repository.TicketTypeRepositoryImpl
 import com.example.finalproyect.data.repository.UploadRepositoryImpl
 import com.example.finalproyect.data.repository.UserRepositoryImpl
@@ -11,6 +12,7 @@ import com.example.finalproyect.domain.repository.AuthRepository
 import com.example.finalproyect.domain.repository.EventRepository
 import com.example.finalproyect.domain.repository.OrganizerRepository
 import com.example.finalproyect.domain.repository.TicketRepository
+import com.example.finalproyect.domain.repository.TicketScanRepository
 import com.example.finalproyect.domain.repository.TicketTypeRepository
 import com.example.finalproyect.domain.repository.UploadRepository
 import com.example.finalproyect.domain.repository.UserRepository
@@ -53,6 +55,12 @@ abstract class RepositoryModule {
     abstract fun bindTicketRepository(
         ticketRepositoryImpl: TicketRepositoryImpl
     ): TicketRepository
+
+
+    @Binds
+    abstract fun bindTicketScanRepository(
+        ticketScanRepositoryImpl: TicketScanRepositoryImpl
+    ): TicketScanRepository
 
     @Binds
     @Singleton

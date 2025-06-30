@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+# Mantener todo el package de navegación sin ofuscar
+-keep class com.example.finalproyect.presenter.navigator.** { *; }
+

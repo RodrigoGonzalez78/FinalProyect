@@ -26,8 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-
-
+import com.example.finalproyect.presenter.home.formatDate
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -73,7 +72,7 @@ fun EventBanner(
                 .padding(16.dp)
         ) {
             Text(
-                text = eventDetail.event.date.month.name,
+                text = formatDate(eventDetail.event.date),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White
             )

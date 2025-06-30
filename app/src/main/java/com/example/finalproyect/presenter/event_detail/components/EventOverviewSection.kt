@@ -35,12 +35,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.presenter.event_detail.EventDetailUiState
+import com.example.finalproyect.presenter.navigator.Screen
 
 
 @Composable
 fun EventOverviewSection(
+    navController: NavHostController,
     uiState: EventDetailUiState,
     onValidateTicket: (String) -> Unit
 ) {
@@ -122,7 +125,14 @@ fun EventOverviewSection(
                         QuickActionButton(
                             icon = Icons.Outlined.QrCodeScanner,
                             text = "Validar QR",
-                            onClick = { /* Navegar a validación */ }
+                            onClick = {
+                                navController.navigate(
+                                    Screen.Scanner.createRoute(
+                                        uiState.eventDetail!!.event.id.toInt(),
+                                        uiState.eventDetail!!.event.name
+                                    )
+                                )
+                            }
                         )
 
                         QuickActionButton(
@@ -148,7 +158,14 @@ fun EventOverviewSection(
                         QuickActionButton(
                             icon = Icons.Outlined.QrCodeScanner,
                             text = "Validar entradas",
-                            onClick = { /* Navegar a validación */ }
+                            onClick = {
+                                navController.navigate(
+                                    Screen.Scanner.createRoute(
+                                        uiState.eventDetail!!.event.id.toInt(),
+                                        uiState.eventDetail!!.event.name
+                                    )
+                                )
+                            }
                         )
                     }
                 }
@@ -174,7 +191,7 @@ fun EventOverviewSection(
                         QuickActionButton(
                             icon = Icons.Outlined.LocationOn,
                             text = "Ubicación",
-                            onClick = { /* Mostrar mapa */ }
+                            onClick = { }
                         )
                     }
                 }
@@ -213,9 +230,11 @@ fun EventOverviewSection(
                 uiState.isOrganizer -> {
                     OrganizerInfoCard(uiState = uiState)
                 }
+
                 uiState.hasUserTicket -> {
                     UserTicketInfoCard(uiState = uiState)
                 }
+
                 else -> {
                     TicketPurchaseInfoCard(uiState = uiState)
                 }

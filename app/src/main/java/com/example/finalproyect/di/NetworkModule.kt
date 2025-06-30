@@ -4,6 +4,7 @@ import com.example.finalproyect.data.remote.api.AuthApi
 import com.example.finalproyect.data.remote.api.EventApi
 import com.example.finalproyect.data.remote.api.OrganizerApi
 import com.example.finalproyect.data.remote.api.TicketApi
+import com.example.finalproyect.data.remote.api.TicketScanApi
 import com.example.finalproyect.data.remote.api.TicketTypeApi
 import com.example.finalproyect.data.remote.api.UploadApi
 import com.example.finalproyect.data.remote.api.UserApi
@@ -112,5 +113,10 @@ object NetworkModule {
     @Singleton
     fun provideUserApi(retrofit: Retrofit): UserApi {
         return retrofit.create(UserApi::class.java)
+    }
+    @Provides
+    @Singleton
+    fun provideTicketScanApi(retrofit: Retrofit): TicketScanApi {
+        return retrofit.create(TicketScanApi::class.java)
     }
 }
