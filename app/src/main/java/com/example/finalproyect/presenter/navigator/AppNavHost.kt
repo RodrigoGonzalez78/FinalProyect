@@ -1,6 +1,4 @@
 package com.example.finalproyect.presenter.navigator
-
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -10,11 +8,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.example.finalproyect.presenter.event_detail.EventDetailScreen
 import com.example.finalproyect.presenter.home.HomeScreen
 import com.example.finalproyect.presenter.login.LoginScreen
@@ -22,34 +19,78 @@ import com.example.finalproyect.presenter.new_event.NewEventScreen
 import com.example.finalproyect.presenter.profile.ProfileScreen
 import com.example.finalproyect.presenter.register.RegisterScreen
 import com.example.finalproyect.presenter.scanner.ScannerScreen
+import kotlinx.serialization.Serializable
 
-sealed class Screen(val route: String) {
-    data object Splash : Screen("splash")
-    data object Home : Screen("home")
-    data object Register : Screen("signup")
-    data object Login : Screen("login")
-    data object NewEvent : Screen("mew_event")
-    data object Profile : Screen("profile")
-    data object EventDetails:Screen("event_details?eventId={eventId}"){
-        fun createRoute(eventId: String) = "event_details?eventId=$eventId"
-    }
-    data object UsersProfiles : Screen("users_profiles?userId={userId}") {
-        fun createRoute(userId: String) = "users_profiles?userId=$userId"
-    }
 
-    data object Scanner :
-        Screen("scanner?eventId={eventId}&eventName={eventName}") {
+@Serializable
+sealed interface AppDestination {
 
-        /**
-         * Construye la ruta de navegación codificando el nombre del evento
-         * para evitar problemas con espacios o caracteres especiales.
-         */
-        fun createRoute(eventId: Int, eventName: String): String =
-            "scanner?eventId=$eventId&eventName=${Uri.encode(eventName)}"
+    @Serializable
+    data object Splash : AppDestination
+
+    @Serializable
+    data object Home : AppDestination
+
+    @Serializable
+    data object Register : AppDestination
+
+    @Serializable
+    data object Login : AppDestination
+
+    @Serializable
+    data object NewEvent : AppDestination
+
+    @Serializable
+    data object Profile : AppDestination
+
+    @Serializable
+    data class EventDetails(
+        val eventId: String
+    ) : AppDestination
+
+    @Serializable
+    data class UsersProfiles(
+        val userId: String
+    ) : AppDestination
+
+    @Serializable
+    data class Scanner(
+        val eventId: Int,
+        val eventName: String
+    ) : AppDestination
+}
+
+
+fun NavHostController.navigateToEventDetails(eventId: String) {
+    navigate(AppDestination.EventDetails(eventId))
+}
+
+fun NavHostController.navigateToUserProfile(userId: String) {
+    navigate(AppDestination.UsersProfiles(userId))
+}
+
+fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
+    navigate(AppDestination.Scanner(eventId, eventName))
+}
+
+fun NavHostController.navigateToHome() {
+    navigate(AppDestination.Home) {
+        popUpTo(0) { inclusive = true }
     }
 }
 
-@androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION])
+fun NavHostController.navigateToLogin() {
+    navigate(AppDestination.Login) {
+        popUpTo(0) { inclusive = true }
+    }
+}
+
+@androidx.annotation.RequiresPermission(
+    allOf = [
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION
+    ]
+)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost(
@@ -59,68 +100,100 @@ fun AppNavHost(
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
 
     LaunchedEffect(isAuthenticated) {
-        val route = if (isAuthenticated) Screen.Home.route else Screen.Login.route
-        navController.navigate(route) {
-            popUpTo(0) { inclusive = true }
+        if (isAuthenticated) {
+            navController.navigateToHome()
+        } else {
+            navController.navigateToLogin()
         }
     }
 
-    NavHost(navController = navController, startDestination = Screen.Login.route) {
-        composable(Screen.Login.route) {
+    NavHost(
+        navController = navController,
+        startDestination = AppDestination.Login
+    ) {
+
+        composable<AppDestination.Login> {
             LoginScreen(navController)
         }
 
-
-        composable(Screen.Register.route) {
+        composable<AppDestination.Register> {
             RegisterScreen(navController)
         }
 
-
-        composable(Screen.NewEvent.route)  {
-            NewEventScreen(
-                navController
-            )
+        composable<AppDestination.NewEvent> {
+            NewEventScreen(navController)
         }
 
-        composable(Screen.Profile.route) {
-            ProfileScreen(
-                navController
-            )
+        composable<AppDestination.Profile> {
+            ProfileScreen(navController)
         }
 
-        composable(Screen.EventDetails.route, arguments = listOf(
-            navArgument("eventId") {
-                type = NavType.StringType
-                nullable = true
-            }
-        )) { backStackEntry ->
-            val eventId = backStackEntry.arguments?.getString("eventId")
-            Log.e("Error",eventId.toString())
+        composable<AppDestination.EventDetails> { backStackEntry ->
+            val eventDetails: AppDestination.EventDetails = backStackEntry.toRoute()
+            Log.d("Navigation", "EventId: ${eventDetails.eventId}")
+
             EventDetailScreen(
-                navController,
-                eventId = eventId?:""
+                navController = navController,
+                eventId = eventDetails.eventId
             )
         }
 
-        composable(Screen.Home.route) {
+        composable<AppDestination.Home> {
             HomeScreen(navController)
         }
 
-        composable(
-            Screen.Scanner.route,
-            arguments = listOf(
-                navArgument("eventId") { type = NavType.IntType },
-                navArgument("eventName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val eventId = backStackEntry.arguments?.getInt("eventId") ?: 0
-            val eventName = backStackEntry.arguments?.getString("eventName") ?: ""
+        composable<AppDestination.UsersProfiles> { backStackEntry ->
+            val userProfiles: AppDestination.UsersProfiles = backStackEntry.toRoute()
+
+            // Aquí iría tu UserProfileScreen cuando la implementes
+            // UserProfileScreen(
+            //     navController = navController,
+            //     userId = userProfiles.userId
+            // )
+        }
+
+        composable<AppDestination.Scanner> { backStackEntry ->
+            val scanner: AppDestination.Scanner = backStackEntry.toRoute()
 
             ScannerScreen(
-                eventId = eventId,
-                eventName = eventName,
+                eventId = scanner.eventId,
+                eventName = scanner.eventName,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
     }
+}
+
+
+class AppNavigator(private val navController: NavHostController) {
+
+    fun navigateToEventDetails(eventId: String) {
+        navController.navigateToEventDetails(eventId)
+    }
+
+    fun navigateToUserProfile(userId: String) {
+        navController.navigateToUserProfile(userId)
+    }
+
+    fun navigateToScanner(eventId: Int, eventName: String) {
+        navController.navigateToScanner(eventId, eventName)
+    }
+
+    fun navigateUp(): Boolean = navController.navigateUp()
+
+    fun navigateBack() = navController.popBackStack()
+
+    fun navigateToHomeAndClearStack() {
+        navController.navigateToHome()
+    }
+
+    fun navigateToLoginAndClearStack() {
+        navController.navigateToLogin()
+    }
+}
+
+
+@Composable
+fun rememberAppNavigator(navController: NavHostController = rememberNavController()): AppNavigator {
+    return AppNavigator(navController)
 }

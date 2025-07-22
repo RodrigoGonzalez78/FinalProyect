@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.finalproyect.presenter.navigator.Screen
+import com.example.finalproyect.presenter.navigator.AppDestination
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -301,7 +301,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
             TextButton(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 onClick = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(AppDestination.Login) {
                         popUpTo(0) { inclusive = true }
                     }
                 }

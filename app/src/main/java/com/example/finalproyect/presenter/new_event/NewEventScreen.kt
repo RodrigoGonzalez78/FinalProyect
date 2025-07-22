@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -38,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.example.finalproyect.presenter.navigator.Screen
+import com.example.finalproyect.presenter.navigator.AppDestination
 import com.google.android.gms.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -75,8 +76,8 @@ fun NewEventScreen(
             snackbarHostState.showSnackbar(message)
             viewModel.clearMessages()
             // Navegar de vuelta después de crear exitosamente
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Home.route) { inclusive = true }
+            navController.navigate(AppDestination.Home) {
+                popUpTo(AppDestination.Home) { inclusive = true }
             }
         }
     }
@@ -107,8 +108,8 @@ fun NewEventScreen(
             TopAppBar(
                 title = { Text("Crear Nuevo Evento") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    IconButton(onClick = { navController.navigate(AppDestination.Home) }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -369,7 +370,7 @@ fun NewEventScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = { navController.navigate(Screen.Home.route) },
+                    onClick = { navController.navigate(AppDestination.Home) },
                     modifier = Modifier.weight(1f),
                     enabled = !uiState.isLoading
                 ) {

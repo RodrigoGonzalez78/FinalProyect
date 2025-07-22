@@ -37,12 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.domain.model.EventDetail
-import com.example.finalproyect.presenter.navigator.Screen
+import com.example.finalproyect.presenter.navigator.AppDestination
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -70,7 +68,7 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
+                    IconButton(onClick = { navController.navigate(AppDestination.Profile) }) {
                         Icon(
                             imageVector = Icons.Outlined.Person,
                             contentDescription = "Perfil",
@@ -86,7 +84,7 @@ fun HomeScreen(
         floatingActionButton = {
             if (activeTab == "events") { // Solo mostrar FAB en la pestaña de eventos
                 FloatingActionButton(
-                    onClick = { navController.navigate(Screen.NewEvent.route) },
+                    onClick = { navController.navigate(AppDestination.NewEvent) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
@@ -450,7 +448,7 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
         ),
         onClick = {
             Log.e("Errror", event.event.id.toString())
-            navController.navigate(Screen.EventDetails.createRoute(eventId = event.event.id.toString()))
+            navController.navigate(AppDestination.EventDetails(eventId = event.event.id.toString()))
         }
     ) {
         Box(
@@ -516,7 +514,7 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = event.event.description ?: "",
+                text = event.event.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,

@@ -1,7 +1,9 @@
 package com.example.finalproyect.presenter.scanner.components
 
 
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -20,6 +22,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun QRScannerView(
     onQRCodeScanned: (String) -> Unit,

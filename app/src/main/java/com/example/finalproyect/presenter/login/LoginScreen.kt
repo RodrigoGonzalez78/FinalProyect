@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.finalproyect.presenter.navigator.Screen
+import com.example.finalproyect.presenter.navigator.AppDestination
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltViewModel()) {
@@ -123,7 +123,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
             TextButton(
                 modifier = Modifier.align(alignment = Alignment.CenterHorizontally),
                 onClick = {
-                    navController.navigate(Screen.Register.route) {
+                    navController.navigate(AppDestination.Register) {
                         popUpTo(0) { inclusive = true }
                     }
                 }

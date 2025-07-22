@@ -28,7 +28,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,9 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.presenter.event_detail.EventDetailUiState
-import com.example.finalproyect.presenter.navigator.Screen
+import com.example.finalproyect.presenter.navigator.AppDestination
 
 
 @Composable
@@ -127,7 +125,7 @@ fun EventOverviewSection(
                             text = "Validar QR",
                             onClick = {
                                 navController.navigate(
-                                    Screen.Scanner.createRoute(
+                                    AppDestination.Scanner(
                                         uiState.eventDetail!!.event.id.toInt(),
                                         uiState.eventDetail!!.event.name
                                     )
@@ -160,9 +158,9 @@ fun EventOverviewSection(
                             text = "Validar entradas",
                             onClick = {
                                 navController.navigate(
-                                    Screen.Scanner.createRoute(
-                                        uiState.eventDetail!!.event.id.toInt(),
-                                        uiState.eventDetail!!.event.name
+                                    AppDestination.Scanner(
+                                        eventId = uiState.eventDetail!!.event.id.toInt(),
+                                        eventName = uiState.eventDetail!!.event.name
                                     )
                                 )
                             }
