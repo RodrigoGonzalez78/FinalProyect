@@ -22,6 +22,7 @@ import com.example.finalproyect.presenter.event_detail.components.ticket_type_se
 import com.example.finalproyect.presenter.event_detail.components.notification_section.CreateNotificationDialog
 import com.example.finalproyect.presenter.event_detail.components.EventDetailContent
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.finalproyect.presenter.event_detail.components.AddOrganizerDialog
 import com.example.finalproyect.presenter.event_detail.components.QrScannerDialog
@@ -33,17 +34,18 @@ fun EventDetailScreen(
     eventId: String,
     viewModel: EventDetailsViewModel = hiltViewModel()
 ) {
+
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val activeSection by viewModel.activeSection.collectAsState()
 
-    // Estados para diálogos
+
     var showScanQrDialog by remember { mutableStateOf(false) }
     var showAddOrganizerDialog by remember { mutableStateOf(false) }
     var showAddTicketTypeDialog by remember { mutableStateOf(false) }
     var showCreateNotificationDialog by remember { mutableStateOf(false) }
 
-    // Estado para permisos de cámara
+
     val cameraPermissionState = remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -62,8 +64,9 @@ fun EventDetailScreen(
         }
     }
 
-    // Cargar detalles del evento cuando se crea el composable
+
     LaunchedEffect(eventId) {
+        Log.e("Varibles",eventId)
         viewModel.loadEventDetail(eventId)
     }
 
@@ -252,7 +255,7 @@ fun EventDetailScreen(
                     onPurchaseTicket = { ticketTypeId -> viewModel.purchaseTicket(ticketTypeId) },
                     onDeleteEvent = { viewModel.deleteEvent() },
                     onValidateTicket = { qrCode ->
-                        // Implementar validación del ticket
+
                     },
                     onCreateTicketType = { name, price, description, available ->
                         viewModel.createTicketType(name, price, description, available)

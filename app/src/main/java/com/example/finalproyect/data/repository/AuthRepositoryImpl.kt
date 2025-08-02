@@ -1,6 +1,7 @@
 package com.example.finalproyect.data.repository
 
 
+import android.util.Log
 import com.example.finalproyect.data.local.dao.UserDao
 import com.example.finalproyect.data.mappers.toAuthResult
 import com.example.finalproyect.data.mappers.toUser
@@ -17,18 +18,18 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
-    private val userDao: UserDao,
     private val preferenceManager: PreferenceManager
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<AuthResult> {
         return try {
             val response = authApi.login(LoginRequest(email, password))
+
             preferenceManager.saveAuthToken(response.token)
             preferenceManager.saveCurrentUserEmail(response.email)
             preferenceManager.saveCurrentUserID(response.userID)
 
-            // Podríamos obtener más datos del usuario y guardarlos localmente
+
             Result.success(response.toAuthResult())
         } catch (e: Exception) {
             Result.failure(e)

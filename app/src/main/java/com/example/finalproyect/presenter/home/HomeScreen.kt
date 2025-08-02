@@ -1,7 +1,6 @@
 package com.example.finalproyect.presenter.home
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -39,6 +38,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.domain.model.EventDetail
 import com.example.finalproyect.presenter.navigator.AppDestination
+import com.example.finalproyect.presenter.navigator.navigateToEventDetails
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.time.LocalDate
@@ -56,14 +56,14 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
-    var activeTab by remember { mutableStateOf<String>("events") }
+    var activeTab by remember { mutableStateOf<String>("tickets") }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = if (activeTab == "events") "Mis Eventos" else "Buscar Eventos",
+                        text = if (activeTab == "events") "Mis Eventos" else if(activeTab == "tikcets") "Mis Entradas" else "Buscar Eventos",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -98,10 +98,10 @@ fun HomeScreen(
                 tonalElevation = 0.dp
             ) {
                 NavigationBarItem(
-                    selected = activeTab == "events",
-                    onClick = { activeTab = "events" },
-                    icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
-                    label = { Text("Mis Eventos") }
+                    selected = activeTab == "tickets",
+                    onClick = { activeTab = "tickets" },
+                    icon = { Icon(Icons.Outlined.LocalActivity, contentDescription = "Tickets") },
+                    label = { Text("Mis Entradas") }
                 )
                 NavigationBarItem(
                     selected = activeTab == "search",
@@ -109,6 +109,13 @@ fun HomeScreen(
                     icon = { Icon(Icons.Outlined.Search, contentDescription = "Buscar") },
                     label = { Text("Buscar") }
                 )
+                NavigationBarItem(
+                    selected = activeTab == "events",
+                    onClick = { activeTab = "events" },
+                    icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
+                    label = { Text("Mis Eventos") }
+                )
+
             }
         }
     ) { paddingValues ->
@@ -132,16 +139,35 @@ fun HomeScreen(
                 "events" -> {
                     // Usar SwipeRefresh para eventos del usuario
                     SwipeRefresh(
-                        state = rememberSwipeRefreshState(uiState.isLoading),
-                        onRefresh = { viewModel.refreshUserEvents() },
+                        state = rememberSwipeRefreshState(uiState.isLoadingOrganizedEvents),
+                        onRefresh = { viewModel.refreshUserOrganizedEvents() },
                         modifier = Modifier.fillMaxSize()
                     ) {
                         EventsContent(
-                            events = uiState.userEvents,
-                            isLoading = uiState.isLoading,
+                            events = uiState.userOrganizedEvents,
+                            isLoading = uiState.isLoadingOrganizedEvents,
                             error = uiState.error,
-                            canLoadMore = uiState.canLoadMore,
-                            onLoadMore = viewModel::loadMoreUserEvents,
+                            canLoadMore = uiState.canLoadMoreOrganizedEvents,
+                            onLoadMore = viewModel::loadMoreUserOrganizedEvents,
+                            navController = navController,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+
+                "tickets" -> {
+
+                    SwipeRefresh(
+                        state = rememberSwipeRefreshState(uiState.isLoadingPurchasedEvents),
+                        onRefresh = { viewModel.refreshUserPurchasedEvents() },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        EventsContent(
+                            events = uiState.userPurchasedEvents,
+                            isLoading = uiState.isLoadingPurchasedEvents,
+                            error = uiState.error,
+                            canLoadMore = uiState.canLoadMorePurchasedEvents,
+                            onLoadMore = viewModel::loadMoreUserPurchasedEvents,
                             navController = navController,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -447,8 +473,7 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
         onClick = {
-            Log.e("Errror", event.event.id.toString())
-            navController.navigate(AppDestination.EventDetails(eventId = event.event.id.toString()))
+            navController.navigateToEventDetails(event.event.id.toString())
         }
     ) {
         Box(
@@ -457,7 +482,7 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                 .height(160.dp)
         ) {
             AsyncImage(
-                model = event.event.banner ?: "https://via.placeholder.com/400x200",
+                model = event.event.banner,
                 contentDescription = event.event.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()

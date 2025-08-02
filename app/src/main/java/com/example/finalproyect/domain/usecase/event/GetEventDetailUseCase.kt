@@ -11,6 +11,7 @@ class GetEventDetailUseCase @Inject constructor(
     private val preferenceManager: PreferenceManager
 ) {
     suspend operator fun invoke(eventId: Int): Result<EventDetailWithPermissions> {
+
         if (eventId <= 0) {
             return Result.failure(Exception("Invalid event ID"))
         }
@@ -25,21 +26,8 @@ class GetEventDetailUseCase @Inject constructor(
             val eventDetail = eventDetailResult.getOrNull()
                 ?: return Result.failure(Exception("Event not found"))
 
-            // Obtener ID del usuario actual
             val currentUserId = preferenceManager.getCurrentUserID().first().toInt()
 
-
-            if (currentUserId == null) {
-                return Result.success(EventDetailWithPermissions(
-                    eventDetail = eventDetail,
-                    isOrganizer = false,
-                    isMainAdmin = false,
-                    canManageOrganizers = false,
-                    canManageTicketTypes = false,
-                    canDeleteEvent = false,
-                    userOrganizerRole = null
-                ))
-            }
 
             // Verificar si el usuario es organizador y sus permisos
             val userOrganizer = eventDetail.organizers.find { it.idUser == currentUserId }

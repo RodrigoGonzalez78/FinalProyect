@@ -11,8 +11,6 @@ import com.example.finalproyect.data.mappers.parseIsoDateTime
 import com.example.finalproyect.data.mappers.parseIsoTime
 import com.example.finalproyect.data.mappers.toEvent
 import com.example.finalproyect.data.mappers.toEventDetail
-import com.example.finalproyect.data.mappers.toEventEntity
-import com.example.finalproyect.data.mappers.toLocationEntity
 import com.example.finalproyect.data.mappers.toPaginatedEvents
 import com.example.finalproyect.data.remote.api.EventApi
 import com.example.finalproyect.data.remote.dto.request.CreateEventRequest
@@ -57,12 +55,33 @@ class EventRepositoryImpl @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun getUserEvents(
+    override suspend fun getUserOrganizedEvents(
         page: Int,
         size: Int
     ): Result<PaginatedEvents> {
         return try {
             val response = eventApi.getUserEvents(page, size)
+            if (response.isSuccessful) {
+                response.body()?.let { paginatedResponse ->
+                    val paginatedEvents = paginatedResponse.toPaginatedEvents()
+                    Result.success(paginatedEvents)
+                } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun getUserPurchasedEvents(
+        page: Int,
+        size: Int
+    ): Result<PaginatedEvents> {
+        return try {
+            val response = eventApi.getUserPurchasedEvents(page, size)
             if (response.isSuccessful) {
                 response.body()?.let { paginatedResponse ->
                     val paginatedEvents = paginatedResponse.toPaginatedEvents()

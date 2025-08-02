@@ -23,6 +23,12 @@ interface EventApi {
         @Query("size") size: Int = 10
     ): Response<PaginatedEventsResponse>
 
+    @GET("users/tickets")
+    suspend fun getUserPurchasedEvents(
+        @Query("page") page: Int = 1,
+        @Query("size") size: Int = 10
+    ): Response<PaginatedEventsResponse>
+
     @GET("events/{id}")
     suspend fun getEventById(
         @Path("id") eventId: Int

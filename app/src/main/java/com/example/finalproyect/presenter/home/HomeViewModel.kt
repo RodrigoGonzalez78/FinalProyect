@@ -2,9 +2,9 @@ package com.example.finalproyect.presenter.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.domain.model.EventDetail
-import com.example.finalproyect.domain.usecase.event.GetUserEventsUseCase
+import com.example.finalproyect.domain.usecase.event.GetUserOrganizedEventsUseCase
+import com.example.finalproyect.domain.usecase.event.GetUserPurchasedEventsUseCase
 import com.example.finalproyect.domain.usecase.event.SearchPublicEventsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getUserEventsUseCase: GetUserEventsUseCase,
+    private val getUserEventsUseCase: GetUserOrganizedEventsUseCase,
+    private val getUserPurchasedEventsUseCase: GetUserPurchasedEventsUseCase,
     private val searchPublicEventsUseCase: SearchPublicEventsUseCase
 ) : ViewModel() {
 
@@ -30,31 +31,53 @@ class HomeViewModel @Inject constructor(
     val isSearchExpanded: StateFlow<Boolean> = _isSearchExpanded.asStateFlow()
 
     init {
-        loadUserEvents()
+        loadUserOrganizedEvents()
+        loadUserPurchasedEvents()
     }
 
-    fun loadUserEvents(page: Int = 1, size: Int = 10) {
+    private fun loadUserPurchasedEvents(page: Int = 1, size: Int = 10) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isLoadingPurchasedEvents =  true, error = null)
 
-            getUserEventsUseCase(page, size)
+            getUserPurchasedEventsUseCase(page, size)
                 .onSuccess { paginatedEvents ->
                     _uiState.value = _uiState.value.copy(
-                        userEvents = if (page == 1) paginatedEvents.events else _uiState.value.userEvents + paginatedEvents.events,
-                        isLoading = false,
-                        canLoadMore = paginatedEvents.events.size == size
+                        userOrganizedEvents = if (page == 1) paginatedEvents.events else _uiState.value.userPurchasedEvents + paginatedEvents.events,
+                        isLoadingPurchasedEvents = false,
+                        canLoadMorePurchasedEvents = paginatedEvents.events.size == size
                     )
                 }
                 .onFailure { exception ->
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
+                        isLoadingPurchasedEvents = false,
                         error = exception.message
                     )
                 }
         }
     }
 
-    fun searchPublicEvents(query: String, page: Int = 1, size: Int = 10) {
+    private fun loadUserOrganizedEvents(page: Int = 1, size: Int = 10) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingOrganizedEvents = true, error = null)
+
+            getUserEventsUseCase(page, size)
+                .onSuccess { paginatedEvents ->
+                    _uiState.value = _uiState.value.copy(
+                        userOrganizedEvents = if (page == 1) paginatedEvents.events else _uiState.value.userOrganizedEvents + paginatedEvents.events,
+                        isLoadingOrganizedEvents = false,
+                        canLoadMoreOrganizedEvents = paginatedEvents.events.size == size
+                    )
+                }
+                .onFailure { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingOrganizedEvents = false,
+                        error = exception.message
+                    )
+                }
+        }
+    }
+
+    private fun searchPublicEvents(query: String, page: Int = 1, size: Int = 10) {
         if (query.isBlank()) {
             _uiState.value = _uiState.value.copy(searchResults = emptyList())
             return
@@ -102,14 +125,24 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun refreshUserEvents() {
-        loadUserEvents()
+    fun refreshUserOrganizedEvents() {
+        loadUserOrganizedEvents()
+    }
+    fun refreshUserPurchasedEvents(){
+        loadUserPurchasedEvents()
     }
 
-    fun loadMoreUserEvents() {
-        if (_uiState.value.canLoadMore && !_uiState.value.isLoading) {
-            val currentPage = (_uiState.value.userEvents.size / 10) + 1
-            loadUserEvents(currentPage)
+    fun loadMoreUserOrganizedEvents() {
+        if (_uiState.value.canLoadMoreOrganizedEvents && !_uiState.value.isLoadingOrganizedEvents) {
+            val currentPage = (_uiState.value.userOrganizedEvents.size / 10) + 1
+            loadUserOrganizedEvents(page = currentPage)
+        }
+    }
+
+    fun loadMoreUserPurchasedEvents() {
+        if (_uiState.value.canLoadMorePurchasedEvents && !_uiState.value.isLoadingPurchasedEvents) {
+            val currentPage = (_uiState.value.userPurchasedEvents.size / 10) + 1
+            loadUserPurchasedEvents(page = currentPage)
         }
     }
 
@@ -123,12 +156,15 @@ class HomeViewModel @Inject constructor(
 
 // HomeUiState.kt
 data class HomeUiState(
-    val userEvents: List<EventDetail> = emptyList(),
+    val userOrganizedEvents: List<EventDetail> = emptyList(),
+    val userPurchasedEvents: List<EventDetail> = emptyList(),
     val searchResults: List<EventDetail> = emptyList(),
-    val isLoading: Boolean = false,
+    val isLoadingOrganizedEvents: Boolean = false,
+    val isLoadingPurchasedEvents: Boolean = false,
     val isSearching: Boolean = false,
     val error: String? = null,
     val searchError: String? = null,
-    val canLoadMore: Boolean = false,
+    val canLoadMoreOrganizedEvents: Boolean = false,
+    val canLoadMorePurchasedEvents: Boolean = false,
     val canLoadMoreSearch: Boolean = false
 )

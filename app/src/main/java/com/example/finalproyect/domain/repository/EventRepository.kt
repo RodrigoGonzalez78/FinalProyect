@@ -3,7 +3,6 @@ package com.example.finalproyect.domain.repository
 import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.domain.model.EventDetail
 import com.example.finalproyect.domain.model.PaginatedEvents
-import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
 
 interface EventRepository {
@@ -13,7 +12,12 @@ interface EventRepository {
         size: Int = 10
     ): Result<PaginatedEvents>
 
-    suspend fun getUserEvents(
+    suspend fun getUserOrganizedEvents(
+        page: Int = 1,
+        size: Int = 10
+    ): Result<PaginatedEvents>
+
+    suspend fun getUserPurchasedEvents(
         page: Int = 1,
         size: Int = 10
     ): Result<PaginatedEvents>

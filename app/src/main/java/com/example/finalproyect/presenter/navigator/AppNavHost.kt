@@ -48,10 +48,7 @@ sealed interface AppDestination {
         val eventId: String
     ) : AppDestination
 
-    @Serializable
-    data class UsersProfiles(
-        val userId: String
-    ) : AppDestination
+
 
     @Serializable
     data class Scanner(
@@ -63,10 +60,6 @@ sealed interface AppDestination {
 
 fun NavHostController.navigateToEventDetails(eventId: String) {
     navigate(AppDestination.EventDetails(eventId))
-}
-
-fun NavHostController.navigateToUserProfile(userId: String) {
-    navigate(AppDestination.UsersProfiles(userId))
 }
 
 fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
@@ -130,28 +123,17 @@ fun AppNavHost(
 
         composable<AppDestination.EventDetails> { backStackEntry ->
             val eventDetails: AppDestination.EventDetails = backStackEntry.toRoute()
-            Log.d("Navigation", "EventId: ${eventDetails.eventId}")
-
             EventDetailScreen(
                 navController = navController,
                 eventId = eventDetails.eventId
             )
+
+
         }
 
         composable<AppDestination.Home> {
             HomeScreen(navController)
         }
-
-        composable<AppDestination.UsersProfiles> { backStackEntry ->
-            val userProfiles: AppDestination.UsersProfiles = backStackEntry.toRoute()
-
-            // Aquí iría tu UserProfileScreen cuando la implementes
-            // UserProfileScreen(
-            //     navController = navController,
-            //     userId = userProfiles.userId
-            // )
-        }
-
         composable<AppDestination.Scanner> { backStackEntry ->
             val scanner: AppDestination.Scanner = backStackEntry.toRoute()
 
@@ -165,35 +147,3 @@ fun AppNavHost(
 }
 
 
-class AppNavigator(private val navController: NavHostController) {
-
-    fun navigateToEventDetails(eventId: String) {
-        navController.navigateToEventDetails(eventId)
-    }
-
-    fun navigateToUserProfile(userId: String) {
-        navController.navigateToUserProfile(userId)
-    }
-
-    fun navigateToScanner(eventId: Int, eventName: String) {
-        navController.navigateToScanner(eventId, eventName)
-    }
-
-    fun navigateUp(): Boolean = navController.navigateUp()
-
-    fun navigateBack() = navController.popBackStack()
-
-    fun navigateToHomeAndClearStack() {
-        navController.navigateToHome()
-    }
-
-    fun navigateToLoginAndClearStack() {
-        navController.navigateToLogin()
-    }
-}
-
-
-@Composable
-fun rememberAppNavigator(navController: NavHostController = rememberNavController()): AppNavigator {
-    return AppNavigator(navController)
-}

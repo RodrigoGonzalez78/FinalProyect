@@ -83,12 +83,14 @@ class EventDetailsViewModel @Inject constructor(
                             error = null
                         )
 
-                        // Cargar datos adicionales
+
                         loadTicketTypes()
                         loadOrganizers()
                         loadUserTicket()
                     },
                     onFailure = { error ->
+                        Log.e("Varibles view",eventId)
+                        Log.e("Varibles view",error.message?:"")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = error.message ?: "Error desconocido"
@@ -475,14 +477,13 @@ data class EventDetailUiState(
     val canDeleteEvent: Boolean
         get() = eventDetailWithPermissions?.canDeleteEvent == true
 
-    // ✅ CORREGIDO: Ahora usa el campo correcto
+
     val userOrganizerRole: Int?
         get() = eventDetailWithPermissions?.userOrganizerRole
 
     val hasUserTicket: Boolean
         get() = userTicket != null
 
-    // Métodos de conveniencia para verificar roles específicos
     val isValidator: Boolean
         get() = userOrganizerRole == 2
 
