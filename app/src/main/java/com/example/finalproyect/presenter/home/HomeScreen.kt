@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.domain.model.EventDetail
+import com.example.finalproyect.presenter.home.component.TicketsContent
 import com.example.finalproyect.presenter.navigator.AppDestination
 import com.example.finalproyect.presenter.navigator.navigateToEventDetails
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -44,26 +45,27 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
-
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     viewModel: HomeViewModel = hiltViewModel(),
-
-    ) {
+) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-
-    var activeTab by remember { mutableStateOf<String>("tickets") }
+    var activeTab by remember { mutableStateOf("tickets") }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = if (activeTab == "events") "Mis Eventos" else if(activeTab == "tikcets") "Mis Entradas" else "Buscar Eventos",
+                        text = when (activeTab) {
+                            "events" -> "Mis Eventos"
+                            "tickets" -> "Mis Entradas"
+                            else -> "Buscar Eventos"
+                        },
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -82,7 +84,7 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            if (activeTab == "events") { // Solo mostrar FAB en la pestaña de eventos
+            if (activeTab == "events") {
                 FloatingActionButton(
                     onClick = { navController.navigate(AppDestination.NewEvent) },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -115,7 +117,6 @@ fun HomeScreen(
                     icon = { Icon(Icons.Outlined.CalendarToday, contentDescription = "Eventos") },
                     label = { Text("Mis Eventos") }
                 )
-
             }
         }
     ) { paddingValues ->
@@ -137,7 +138,6 @@ fun HomeScreen(
             // Contenido basado en la pestaña activa
             when (activeTab) {
                 "events" -> {
-                    // Usar SwipeRefresh para eventos del usuario
                     SwipeRefresh(
                         state = rememberSwipeRefreshState(uiState.isLoadingOrganizedEvents),
                         onRefresh = { viewModel.refreshUserOrganizedEvents() },
@@ -154,16 +154,14 @@ fun HomeScreen(
                         )
                     }
                 }
-
                 "tickets" -> {
-
                     SwipeRefresh(
                         state = rememberSwipeRefreshState(uiState.isLoadingPurchasedEvents),
                         onRefresh = { viewModel.refreshUserPurchasedEvents() },
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        EventsContent(
-                            events = uiState.userPurchasedEvents,
+                        TicketsContent(
+                            tickets = uiState.userPurchasedEvents,
                             isLoading = uiState.isLoadingPurchasedEvents,
                             error = uiState.error,
                             canLoadMore = uiState.canLoadMorePurchasedEvents,
@@ -173,7 +171,6 @@ fun HomeScreen(
                         )
                     }
                 }
-
                 "search" -> {
                     SearchContent(
                         searchResults = uiState.searchResults,
@@ -189,7 +186,6 @@ fun HomeScreen(
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -221,7 +217,6 @@ fun SearchBar(
                 modifier = Modifier.padding(start = 8.dp, end = 8.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
             TextField(
                 value = query,
                 onValueChange = onQueryChange,
@@ -252,7 +247,6 @@ fun SearchBar(
                 ),
                 singleLine = true
             )
-
             if (query.isNotEmpty()) {
                 IconButton(
                     onClick = { onQueryChange("") }
@@ -487,7 +481,6 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -500,7 +493,6 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                         )
                     )
             )
-
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -513,7 +505,6 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                     ),
                     color = Color.White
                 )
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 4.dp)
@@ -534,7 +525,6 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                 }
             }
         }
-
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
@@ -545,7 +535,6 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

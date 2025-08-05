@@ -24,8 +24,11 @@ import com.example.finalproyect.presenter.event_detail.components.EventDetailCon
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.finalproyect.presenter.event_detail.components.AddOrganizerDialog
 import com.example.finalproyect.presenter.event_detail.components.QrScannerDialog
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -34,18 +37,17 @@ fun EventDetailScreen(
     eventId: String,
     viewModel: EventDetailsViewModel = hiltViewModel()
 ) {
-
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val activeSection by viewModel.activeSection.collectAsState()
 
-
+    // Estados para diálogos
     var showScanQrDialog by remember { mutableStateOf(false) }
     var showAddOrganizerDialog by remember { mutableStateOf(false) }
     var showAddTicketTypeDialog by remember { mutableStateOf(false) }
     var showCreateNotificationDialog by remember { mutableStateOf(false) }
 
-
+    // Estado para permisos de cámara
     val cameraPermissionState = remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -64,9 +66,8 @@ fun EventDetailScreen(
         }
     }
 
-
+    // Cargar detalles del evento cuando se crea el composable
     LaunchedEffect(eventId) {
-        Log.e("Varibles",eventId)
         viewModel.loadEventDetail(eventId)
     }
 
@@ -92,7 +93,7 @@ fun EventDetailScreen(
                     // Mostrar rol del usuario en la barra superior
                     if (uiState.isOrganizer) {
                         Surface(
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
                         ) {
                             Text(
@@ -255,13 +256,19 @@ fun EventDetailScreen(
                     onPurchaseTicket = { ticketTypeId -> viewModel.purchaseTicket(ticketTypeId) },
                     onDeleteEvent = { viewModel.deleteEvent() },
                     onValidateTicket = { qrCode ->
-
+                        // Implementar validación del ticket
                     },
                     onCreateTicketType = { name, price, description, available ->
                         viewModel.createTicketType(name, price, description, available)
                     },
                     onUpdateTicketType = { ticketTypeId, name, price, description, available ->
-                        viewModel.updateTicketType(ticketTypeId, name, price, description, available)
+                        viewModel.updateTicketType(
+                            ticketTypeId,
+                            name,
+                            price,
+                            description,
+                            available
+                        )
                     },
                     onCreateOrganizer = { email, roleId ->
                         viewModel.createOrganizer(email, roleId)
@@ -274,6 +281,10 @@ fun EventDetailScreen(
                     },
                     onDeleteTicketType = { ticketTypeId ->
                         viewModel.deleteTicketType(ticketTypeId)
+                    },
+                    onNavigateToTicketDetail = {
+                        // Navegar a la pantalla de detalles del ticket
+                        navController.navigate("ticket_detail/$eventId")
                     },
                     navController = navController
                 )

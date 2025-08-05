@@ -25,10 +25,12 @@ import com.example.finalproyect.domain.model.TicketType
 import com.example.finalproyect.presenter.event_detail.EventDetailUiState
 import com.example.finalproyect.utils.QRCodeUtils
 
+
 @Composable
 fun UserTicketSection(
     uiState: EventDetailUiState,
-    onPurchaseTicket: (Int) -> Unit
+    onPurchaseTicket: (Int) -> Unit,
+    onNavigateToTicketDetail: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -36,10 +38,13 @@ fun UserTicketSection(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Si el usuario ya tiene ticket, mostrarlo
+        // Si el usuario ya tiene ticket, mostrar resumen y botón para ver detalles
         if (uiState.hasUserTicket && uiState.userTicket != null) {
             item {
-                UserTicketCard(ticket = uiState.userTicket)
+                UserTicketSummaryCard(
+                    ticket = uiState.userTicket,
+                    onViewDetails = onNavigateToTicketDetail
+                )
             }
         } else {
             // Mostrar tipos de ticket disponibles para compra
@@ -103,8 +108,9 @@ fun UserTicketSection(
 }
 
 @Composable
-private fun UserTicketCard(
-    ticket: Ticket
+private fun UserTicketSummaryCard(
+    ticket: Ticket,
+    onViewDetails: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -113,7 +119,7 @@ private fun UserTicketCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -142,49 +148,7 @@ private fun UserTicketCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-
-            if (ticket.hasQrCode) {
-                Box(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White)
-                        .align(Alignment.CenterHorizontally),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Convertir el Base64 a Bitmap una sola vez
-                    val qrBitmap = remember(ticket.qrCode) {
-                        QRCodeUtils.base64ToBitmap(ticket.qrCode!!)
-                    }
-                    Log.e("Error",ticket.qrCode?: "nada")
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (qrBitmap != null) {
-                            Image(
-                                painter = BitmapPainter(qrBitmap.asImageBitmap()),
-                                contentDescription = "Código QR",
-                                modifier = Modifier.size(200.dp)
-                            )
-                        }else{
-                            Icon(
-                                imageVector = Icons.Outlined.QrCode,
-                                contentDescription = "Código QR",
-                                modifier = Modifier.size(200.dp),
-                                tint = Color.Black
-                            )
-                        }
-                        Text(
-                            text = "Código QR",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Black
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Información del ticket
+            // Información resumida
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -225,36 +189,18 @@ private fun UserTicketCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botones de acción
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Botón para ver detalles completos
+            Button(
+                onClick = onViewDetails,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                OutlinedButton(
-                    onClick = { /* Compartir ticket */ },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Compartir")
-                }
-
-                Button(
-                    onClick = { /* Descargar ticket */ },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Download,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Descargar")
-                }
+                Icon(
+                    imageVector = Icons.Outlined.QrCode,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Ver ticket completo")
             }
         }
     }
@@ -333,3 +279,4 @@ private fun PurchaseTicketTypeCard(
         }
     }
 }
+

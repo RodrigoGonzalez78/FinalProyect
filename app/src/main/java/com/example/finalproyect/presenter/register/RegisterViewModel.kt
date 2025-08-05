@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
@@ -115,7 +117,9 @@ class RegisterViewModel @Inject constructor(
                     lastName = currentState.lastName,
                     email = currentState.email,
                     password = currentState.password,
-                    birthday = currentState.birthday.toString(),
+                    birthday = currentState.birthday
+                        .atStartOfDay(ZoneOffset.UTC)
+                        .format(DateTimeFormatter.ISO_INSTANT),
                     phone = currentState.phone
                 )
 

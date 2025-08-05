@@ -48,6 +48,12 @@ sealed interface AppDestination {
         val eventId: String
     ) : AppDestination
 
+    @Serializable
+    data class TicketsDetails(
+        val eventId: String
+    ) : AppDestination
+
+
 
 
     @Serializable
