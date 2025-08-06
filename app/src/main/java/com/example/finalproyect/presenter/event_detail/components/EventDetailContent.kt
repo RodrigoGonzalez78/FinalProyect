@@ -30,8 +30,7 @@ fun EventDetailContent(
     onCreateOrganizer: (String, Int) -> Unit = { _, _ -> },
     onUpdateOrganizerRole: (Int, Int) -> Unit = { _, _ -> },
     onDeleteOrganizer: (Int) -> Unit = {},
-    onDeleteTicketType: (Int) -> Unit = {},
-    onNavigateToTicketDetail: () -> Unit = {}
+    onDeleteTicketType: (Int) -> Unit = {}
 ) {
     val eventDetail = uiState.eventDetail ?: return
 
@@ -63,12 +62,13 @@ fun EventDetailContent(
                     navController = navController
                 )
 
-                "userTicket" -> {
-                    UserTicketSection(
-                        uiState = uiState,
-                        onPurchaseTicket = onPurchaseTicket,
-                        onNavigateToTicketDetail = onNavigateToTicketDetail
-                    )
+                "tickets" -> {
+                    if (!(uiState.isMainAdmin || uiState.userOrganizerRole == 2)) {
+                        UserTicketSection(
+                            uiState = uiState,
+                            onPurchaseTicket = onPurchaseTicket
+                        )
+                    }
                 }
 
                 "notifications" -> NotificationsSection(uiState = uiState)

@@ -119,8 +119,8 @@ fun AddOrganizerDialog(
     onAddOrganizer: (email: String, role: String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
-    var selectedRole by remember { mutableStateOf("Editor") }
-    val roles = listOf("Administrador", "Editor", "Asistente")
+    var selectedRole by remember { mutableStateOf("Validador") }
+    val roles = listOf("Administrador", "Validador")
     var expanded by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -233,8 +233,6 @@ fun EditOrganizerDialog(
 
     val availableRoles = listOf(
         2 to "Validador",
-        3 to "Moderador",
-        4 to "Colaborador"
     )
 
     Dialog(onDismissRequest = onDismiss) {

@@ -22,12 +22,9 @@ import com.example.finalproyect.presenter.event_detail.components.ticket_type_se
 import com.example.finalproyect.presenter.event_detail.components.notification_section.CreateNotificationDialog
 import com.example.finalproyect.presenter.event_detail.components.EventDetailContent
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.finalproyect.presenter.event_detail.components.AddOrganizerDialog
 import com.example.finalproyect.presenter.event_detail.components.QrScannerDialog
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -93,7 +90,7 @@ fun EventDetailScreen(
                     // Mostrar rol del usuario en la barra superior
                     if (uiState.isOrganizer) {
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
                         ) {
                             Text(
@@ -262,13 +259,7 @@ fun EventDetailScreen(
                         viewModel.createTicketType(name, price, description, available)
                     },
                     onUpdateTicketType = { ticketTypeId, name, price, description, available ->
-                        viewModel.updateTicketType(
-                            ticketTypeId,
-                            name,
-                            price,
-                            description,
-                            available
-                        )
+                        viewModel.updateTicketType(ticketTypeId, name, price, description, available)
                     },
                     onCreateOrganizer = { email, roleId ->
                         viewModel.createOrganizer(email, roleId)
@@ -282,10 +273,6 @@ fun EventDetailScreen(
                     onDeleteTicketType = { ticketTypeId ->
                         viewModel.deleteTicketType(ticketTypeId)
                     },
-                    onNavigateToTicketDetail = {
-                        // Navegar a la pantalla de detalles del ticket
-                        navController.navigate("ticket_detail/$eventId")
-                    },
                     navController = navController
                 )
             }
@@ -298,10 +285,9 @@ fun EventDetailScreen(
             onDismiss = { showAddOrganizerDialog = false },
             onAddOrganizer = { email, role ->
                 val roleId = when (role) {
-                    "Administrador" -> 2
-                    "Editor" -> 3
-                    "Asistente" -> 4
-                    else -> 4
+                    "Administrador" -> 1
+                    "Validador" -> 2
+                    else -> 2
                 }
                 viewModel.createOrganizer(email, roleId)
                 showAddOrganizerDialog = false

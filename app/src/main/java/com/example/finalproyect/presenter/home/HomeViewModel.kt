@@ -42,7 +42,7 @@ class HomeViewModel @Inject constructor(
             getUserPurchasedEventsUseCase(page, size)
                 .onSuccess { paginatedEvents ->
                     _uiState.value = _uiState.value.copy(
-                        userOrganizedEvents = if (page == 1) paginatedEvents.events else _uiState.value.userPurchasedEvents + paginatedEvents.events,
+                        userPurchasedEvents = if (page == 1) paginatedEvents.events else _uiState.value.userPurchasedEvents + paginatedEvents.events,
                         isLoadingPurchasedEvents = false,
                         canLoadMorePurchasedEvents = paginatedEvents.events.size == size
                     )

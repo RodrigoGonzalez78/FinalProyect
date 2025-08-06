@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.finalproyect.domain.model.EventDetail
+import com.example.finalproyect.presenter.navigator.navigateToTicketsDetails
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -43,7 +44,7 @@ fun TicketItem(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = {
-            navController.navigate("ticket_detail/${event.event.id}")
+            navController.navigateToTicketsDetails(eventId = event.event.id.toString())
         }
     ) {
         Row(

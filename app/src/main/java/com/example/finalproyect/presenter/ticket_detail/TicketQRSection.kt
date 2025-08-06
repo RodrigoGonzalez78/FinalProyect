@@ -1,5 +1,6 @@
 package com.example.finalproyect.presenter.ticket_detail
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,9 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.finalproyect.domain.model.Ticket
+import com.example.finalproyect.utils.QRCodeUtils
 
 @Composable
 fun TicketQRSection(
@@ -52,12 +56,18 @@ fun TicketQRSection(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.QrCode,
-                            contentDescription = "Código QR",
-                            modifier = Modifier.size(200.dp),
-                            tint = Color.Black
-                        )
+
+                        val qrBitmap = remember(ticket.qrCode) {
+                            QRCodeUtils.base64ToBitmap(ticket.qrCode!!)
+                        }
+
+                        if (qrBitmap != null) {
+                            Image(
+                                painter = BitmapPainter(qrBitmap.asImageBitmap()),
+                                contentDescription = "Código QR",
+                                modifier = Modifier.size(200.dp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
 

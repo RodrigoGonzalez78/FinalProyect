@@ -19,6 +19,7 @@ import com.example.finalproyect.presenter.new_event.NewEventScreen
 import com.example.finalproyect.presenter.profile.ProfileScreen
 import com.example.finalproyect.presenter.register.RegisterScreen
 import com.example.finalproyect.presenter.scanner.ScannerScreen
+import com.example.finalproyect.presenter.ticket_detail.TicketDetailScreen
 import kotlinx.serialization.Serializable
 
 
@@ -66,6 +67,10 @@ sealed interface AppDestination {
 
 fun NavHostController.navigateToEventDetails(eventId: String) {
     navigate(AppDestination.EventDetails(eventId))
+}
+
+fun NavHostController.navigateToTicketsDetails(eventId: String) {
+    navigate(AppDestination.TicketsDetails(eventId))
 }
 
 fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
@@ -136,6 +141,19 @@ fun AppNavHost(
 
 
         }
+
+        composable<AppDestination.TicketsDetails> { backStackEntry ->
+            val ticketDetails: AppDestination.TicketsDetails = backStackEntry.toRoute()
+
+            TicketDetailScreen(
+                navController= navController,
+                eventId = ticketDetails.eventId
+            )
+
+
+
+        }
+
 
         composable<AppDestination.Home> {
             HomeScreen(navController)
