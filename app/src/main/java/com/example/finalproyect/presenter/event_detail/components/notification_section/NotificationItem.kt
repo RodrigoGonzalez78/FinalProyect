@@ -66,7 +66,7 @@ fun NotificationItem(notification: Notification) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = notification.message,
+                text = notification.title,
                 style = MaterialTheme.typography.bodyMedium
             )
 

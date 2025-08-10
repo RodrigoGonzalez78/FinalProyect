@@ -6,7 +6,9 @@ import com.example.finalproyect.domain.model.Ticket
 import com.example.finalproyect.domain.model.TicketType
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.finalproyect.domain.model.Notification
 import com.example.finalproyect.domain.usecase.event.GetEventDetailUseCase
+import com.example.finalproyect.domain.usecase.notification.GetNotificationsByEventUseCase
 import com.example.finalproyect.domain.usecase.ticket.GetUserTicketForEventUseCase
 import com.example.finalproyect.domain.usecase.ticket_type.GetTicketTypesByEventUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +21,8 @@ import javax.inject.Inject
 class TicketDetailViewModel @Inject constructor(
     private val getUserTicketForEventUseCase: GetUserTicketForEventUseCase,
     private val getEventDetailUseCase: GetEventDetailUseCase,
-    private val getTicketTypesByEventUseCase: GetTicketTypesByEventUseCase
+    private val getTicketTypesByEventUseCase: GetTicketTypesByEventUseCase,
+    private val getNotificationsByEventUseCase: GetNotificationsByEventUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketDetailUiState())
@@ -44,6 +47,9 @@ class TicketDetailViewModel @Inject constructor(
                         if (ticket != null) {
                             loadTicketType(eventId, ticket.ticketTypeId)
                         }
+
+                        // Cargar notificaciones del evento
+                        loadNotifications(eventId)
                     },
                     onFailure = { error ->
                         _uiState.value = _uiState.value.copy(
@@ -93,6 +99,28 @@ class TicketDetailViewModel @Inject constructor(
         )
     }
 
+    private suspend fun loadNotifications(eventId: Int) {
+        _uiState.value = _uiState.value.copy(isLoadingNotifications = true)
+
+        val notificationsResult = getNotificationsByEventUseCase(eventId)
+
+        notificationsResult.fold(
+            onSuccess = { notifications ->
+                _uiState.value = _uiState.value.copy(
+                    notifications = notifications,
+                    isLoadingNotifications = false
+                )
+            },
+            onFailure = {
+                // No es crítico si no se pueden cargar las notificaciones
+                _uiState.value = _uiState.value.copy(
+                    notifications = emptyList(),
+                    isLoadingNotifications = false
+                )
+            }
+        )
+    }
+
     fun downloadTicket() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDownloading = true)
@@ -137,6 +165,12 @@ class TicketDetailViewModel @Inject constructor(
         }
     }
 
+    fun refreshNotifications(eventId: Int) {
+        viewModelScope.launch {
+            loadNotifications(eventId)
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
@@ -145,7 +179,6 @@ class TicketDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(successMessage = null)
     }
 }
-
 
 data class TicketDetailUiState(
     val isLoading: Boolean = false,
@@ -158,6 +191,10 @@ data class TicketDetailUiState(
     // Datos del evento
     val event: Event? = null,
     val location: Location? = null,
+
+    // Notificaciones del evento
+    val notifications: List<Notification> = emptyList(),
+    val isLoadingNotifications: Boolean = false,
 
     // Estados de operaciones
     val isDownloading: Boolean = false,

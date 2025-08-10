@@ -1,9 +1,13 @@
 package com.example.finalproyect.domain.model
 
-import java.time.LocalTime
+import java.time.LocalDateTime
 
 data class Notification(
-    val title:String,
-    val message:String,
-    val createdAt: LocalTime
+    val id: Int,
+    val eventId: Int,
+    val title: String,
+    val description: String,
+    val image: String,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
 )

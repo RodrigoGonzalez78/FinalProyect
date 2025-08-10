@@ -40,6 +40,7 @@ import com.example.finalproyect.domain.model.EventDetail
 import com.example.finalproyect.presenter.home.component.TicketsContent
 import com.example.finalproyect.presenter.navigator.AppDestination
 import com.example.finalproyect.presenter.navigator.navigateToEventDetails
+import com.example.finalproyect.presenter.navigator.navigateToPublicEvent
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.time.LocalDate
@@ -288,7 +289,7 @@ fun EventsContent(
         }
 
         items(events) { event ->
-            EventItem(event = event, navController = navController)
+            EventItem(event = event, navController = navController,false)
         }
 
         if (canLoadMore) {
@@ -334,7 +335,7 @@ fun SearchContent(
         }
 
         items(searchResults) { event ->
-            EventItem(event = event, navController = navController)
+            EventItem(event = event, navController = navController,true)
         }
 
         if (canLoadMore) {
@@ -455,11 +456,10 @@ fun EmptySearchMessage() {
     }
 }
 
-// EventItem mantiene el mismo código que tenías
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventItem(event: EventDetail, navController: NavHostController) {
+fun EventItem(event: EventDetail, navController: NavHostController,itemSearch:Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -467,7 +467,13 @@ fun EventItem(event: EventDetail, navController: NavHostController) {
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
         onClick = {
-            navController.navigateToEventDetails(event.event.id.toString())
+
+            if (itemSearch){
+                navController.navigateToPublicEvent(eventId = event.event.id.toString())
+            }else{
+                navController.navigateToEventDetails(event.event.id.toString())
+            }
+
         }
     ) {
         Box(

@@ -2,6 +2,7 @@ package com.example.finalproyect.di
 
 import com.example.finalproyect.data.remote.api.AuthApi
 import com.example.finalproyect.data.remote.api.EventApi
+import com.example.finalproyect.data.remote.api.NotificationApi
 import com.example.finalproyect.data.remote.api.OrganizerApi
 import com.example.finalproyect.data.remote.api.TicketApi
 import com.example.finalproyect.data.remote.api.TicketScanApi
@@ -118,5 +119,11 @@ object NetworkModule {
     @Singleton
     fun provideTicketScanApi(retrofit: Retrofit): TicketScanApi {
         return retrofit.create(TicketScanApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationApi(retrofit: Retrofit): NotificationApi {
+        return retrofit.create(NotificationApi::class.java)
     }
 }

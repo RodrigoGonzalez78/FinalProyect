@@ -17,6 +17,7 @@ import com.example.finalproyect.presenter.home.HomeScreen
 import com.example.finalproyect.presenter.login.LoginScreen
 import com.example.finalproyect.presenter.new_event.NewEventScreen
 import com.example.finalproyect.presenter.profile.ProfileScreen
+import com.example.finalproyect.presenter.public_event.EventPublicScreen
 import com.example.finalproyect.presenter.register.RegisterScreen
 import com.example.finalproyect.presenter.scanner.ScannerScreen
 import com.example.finalproyect.presenter.ticket_detail.TicketDetailScreen
@@ -54,7 +55,10 @@ sealed interface AppDestination {
         val eventId: String
     ) : AppDestination
 
-
+    @Serializable
+    data class PublicEvent(
+        val eventId: String
+    ) : AppDestination
 
 
     @Serializable
@@ -71,6 +75,10 @@ fun NavHostController.navigateToEventDetails(eventId: String) {
 
 fun NavHostController.navigateToTicketsDetails(eventId: String) {
     navigate(AppDestination.TicketsDetails(eventId))
+}
+
+fun NavHostController.navigateToPublicEvent(eventId: String) {
+    navigate(AppDestination.PublicEvent(eventId))
 }
 
 fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
@@ -135,6 +143,16 @@ fun AppNavHost(
         composable<AppDestination.EventDetails> { backStackEntry ->
             val eventDetails: AppDestination.EventDetails = backStackEntry.toRoute()
             EventDetailScreen(
+                navController = navController,
+                eventId = eventDetails.eventId
+            )
+
+
+        }
+
+        composable<AppDestination.PublicEvent> { backStackEntry ->
+            val eventDetails: AppDestination.PublicEvent = backStackEntry.toRoute()
+            EventPublicScreen(
                 navController = navController,
                 eventId = eventDetails.eventId
             )
