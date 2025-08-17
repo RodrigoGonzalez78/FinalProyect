@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
 import com.example.finalproyect.presenter.event_detail.EventDetailUiState
+import com.example.finalproyect.presenter.event_detail.EventDetailsViewModel
 import com.example.finalproyect.presenter.event_detail.components.notification_section.NotificationsSection
 
 
@@ -21,16 +23,7 @@ fun EventDetailContent(
     uiState: EventDetailUiState,
     activeSection: String,
     paddingValues: PaddingValues,
-    onSectionChange: (String) -> Unit,
-    onPurchaseTicket: (Int) -> Unit = {},
-    onDeleteEvent: () -> Unit = {},
-    onValidateTicket: (String) -> Unit = {},
-    onCreateTicketType: (String, Double, String?, Int) -> Unit = { _, _, _, _ -> },
-    onUpdateTicketType: (Int, String, Double, String?, Int) -> Unit = { _, _, _, _, _ -> },
-    onCreateOrganizer: (String, Int) -> Unit = { _, _ -> },
-    onUpdateOrganizerRole: (Int, Int) -> Unit = { _, _ -> },
-    onDeleteOrganizer: (Int) -> Unit = {},
-    onDeleteTicketType: (Int) -> Unit = {}
+    viewModel: EventDetailsViewModel
 ) {
     val eventDetail = uiState.eventDetail ?: return
 
@@ -39,49 +32,38 @@ fun EventDetailContent(
             .fillMaxSize()
             .padding(paddingValues)
     ) {
-        // Banner del evento
+
         EventBanner(
             eventDetail = eventDetail,
             uiState = uiState,
-            onDeleteEvent = onDeleteEvent
+            onDeleteEvent = { viewModel.deleteEvent() }
+
         )
 
-        // Navegación por tabs
+
         EventNavigationTabs(
             uiState = uiState,
             activeSection = activeSection,
-            onSectionChange = onSectionChange
+            onSectionChange = { section -> viewModel.setActiveSection(section) }
         )
 
-        // Contenido según la sección activa
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeSection) {
                 "overview" -> EventOverviewSection(
                     uiState = uiState,
-                    onValidateTicket = onValidateTicket,
                     navController = navController
                 )
-
-                "tickets" -> {
-                    if (!(uiState.isMainAdmin || uiState.userOrganizerRole == 2)) {
-                        UserTicketSection(
-                            uiState = uiState,
-                            onPurchaseTicket = onPurchaseTicket
-                        )
-                    }
-                }
 
                 "notifications" -> NotificationsSection(uiState = uiState)
                 "organizers" -> OrganizersSection(
                     uiState = uiState,
-                    onUpdateOrganizerRole = onUpdateOrganizerRole,
-                    onDeleteOrganizer = onDeleteOrganizer
+                    onUpdateOrganizerRole = {organizerId,rolId->viewModel.updateOrganizerRole(organizerId,rolId)},
+                    onDeleteOrganizer = {idOrganizer-> viewModel.deleteOrganizer(idOrganizer)}
                 )
 
                 "ticketTypes" -> TicketTypesSection(
                     uiState = uiState,
-                    onUpdateTicketType = onUpdateTicketType,
-                    onDeleteTicketType = onDeleteTicketType
+                    onDeleteTicketType = {id->viewModel.deleteTicketType(id)}
                 )
             }
         }

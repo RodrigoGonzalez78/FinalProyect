@@ -1,7 +1,12 @@
 package com.example.finalproyect.presenter.create_notification
 
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -9,11 +14,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import android.Manifest
+import android.os.Build
+import android.util.Log
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,17 +39,37 @@ fun CreateNotificationScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
-    // Manejar éxito de creación
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.updateImage(it.toString()) }
+    }
+
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            imagePickerLauncher.launch("image/*")
+        } else {
+            // Opcional: mostrar mensaje de error
+            Log.w("CreateNotification", "Permiso de galería denegado")
+        }
+    }
+
+
     LaunchedEffect(uiState.createSuccess) {
         if (uiState.createSuccess) {
             navController.popBackStack()
         }
     }
 
-    // Manejar mensajes de éxito
+
     LaunchedEffect(uiState.successMessage) {
-        uiState.successMessage?.let {
+        uiState.successMessage?.let { message ->
             viewModel.clearSuccessMessage()
         }
     }
@@ -72,41 +106,8 @@ fun CreateNotificationScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Información del evento
-            if (eventName.isNotBlank()) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Event,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Evento",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = eventName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
-            }
 
-            // Formulario
+            // Campo de título
             OutlinedTextField(
                 value = uiState.title,
                 onValueChange = viewModel::updateTitle,
@@ -131,6 +132,7 @@ fun CreateNotificationScreen(
                 singleLine = true
             )
 
+            // Campo de descripción
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = viewModel::updateDescription,
@@ -156,22 +158,153 @@ fun CreateNotificationScreen(
                 maxLines = 5
             )
 
-            OutlinedTextField(
-                value = uiState.image,
-                onValueChange = viewModel::updateImage,
-                label = { Text("URL de imagen (opcional)") },
-                placeholder = { Text("https://ejemplo.com/imagen.jpg") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = null
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
 
-            // Mensaje de error
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Imagen (opcional)",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Mostrar imagen seleccionada si existe
+                    if (uiState.selectedImageUri.isNotBlank()) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(uiState.selectedImageUri)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Imagen seleccionada",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop,
+                            // Opcional: agregar placeholder y error
+                            // placeholder = painterResource(R.drawable.ic_placeholder),
+                            // error = painterResource(R.drawable.ic_error)
+                        )
+
+                        // Mostrar estado de subida
+                        when {
+                            uiState.isUploadingImage -> {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Subiendo imagen...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            uiState.image != null -> {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Imagen lista",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Botones para manejo de imagen
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                // Manejo mejorado de permisos según versión Android
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    // Android 13+ - No necesita permisos explícitos
+                                    imagePickerLauncher.launch("image/*")
+                                } else {
+                                    // Android < 13 - Verificar permisos
+                                    when (PackageManager.PERMISSION_GRANTED) {
+                                        ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.READ_EXTERNAL_STORAGE
+                                        ) -> {
+                                            imagePickerLauncher.launch("image/*")
+                                        }
+                                        else -> {
+                                            permissionLauncher.launch(
+                                                Manifest.permission.READ_EXTERNAL_STORAGE
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isUploadingImage
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PhotoLibrary,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Seleccionar")
+                        }
+
+                        if (uiState.selectedImageUri.isNotBlank()) {
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.updateImage("")
+                                    // Opcional: también limpiar la imagen procesada
+                                    // viewModel.clearImage()
+                                },
+                                enabled = !uiState.isUploadingImage
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Quitar")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Mostrar errores
             if (uiState.error != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -199,7 +332,7 @@ fun CreateNotificationScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botones
+            // Botones de acción
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -207,7 +340,7 @@ fun CreateNotificationScreen(
                 OutlinedButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f),
-                    enabled = !uiState.isCreating
+                    enabled = !uiState.isLoading && !uiState.isUploadingImage
                 ) {
                     Text("Cancelar")
                 }
@@ -217,16 +350,26 @@ fun CreateNotificationScreen(
                         val id = eventId.toIntOrNull()
                         if (id != null) {
                             viewModel.createNotification(id)
+                        } else {
+                            Log.e("CreateNotification", "EventId inválido: $eventId")
+                            // Opcional: mostrar mensaje de error al usuario
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = uiState.canCreate
+                    enabled = uiState.canCreate && !uiState.isUploadingImage
                 ) {
-                    if (uiState.isCreating) {
+                    if (uiState.isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when {
+                                uiState.isUploadingImage -> "Subiendo..."
+                                else -> "Creando..."
+                            }
                         )
                     } else {
                         Text("Crear Notificación")
@@ -235,33 +378,4 @@ fun CreateNotificationScreen(
             }
         }
     }
-}
-
-
-data class CreateNotificationUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val successMessage: String? = null,
-
-    // Campos del formulario
-    val title: String = "",
-    val description: String = "",
-    val image: String = "",
-
-    // Estados de validación
-    val titleError: String? = null,
-    val descriptionError: String? = null,
-
-    // Estados de operación
-    val isCreating: Boolean = false,
-    val createSuccess: Boolean = false
-) {
-    val isFormValid: Boolean
-        get() = title.isNotBlank() &&
-                description.isNotBlank() &&
-                titleError == null &&
-                descriptionError == null
-
-    val canCreate: Boolean
-        get() = isFormValid && !isCreating
 }

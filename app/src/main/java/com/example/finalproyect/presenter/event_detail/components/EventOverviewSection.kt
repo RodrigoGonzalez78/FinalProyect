@@ -43,7 +43,6 @@ import com.example.finalproyect.presenter.navigator.AppDestination
 fun EventOverviewSection(
     navController: NavHostController,
     uiState: EventDetailUiState,
-    onValidateTicket: (String) -> Unit
 ) {
     val eventDetail = uiState.eventDetail ?: return
 

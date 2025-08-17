@@ -38,7 +38,7 @@ fun EventPublicInfo(
                 fontWeight = FontWeight.Bold
             )
 
-            // Descripción
+
             if (event.description.isNotBlank()) {
                 Text(
                     text = event.description,
@@ -47,9 +47,8 @@ fun EventPublicInfo(
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
-            // Fecha y hora
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -73,7 +72,7 @@ fun EventPublicInfo(
                 }
             }
 
-            // Ubicación
+
             if (location != null) {
                 Row(
                     verticalAlignment = Alignment.Top
@@ -95,36 +94,7 @@ fun EventPublicInfo(
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
-                        Text(
-                            text = "${location.direction}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
-                }
-            }
-
-            // Capacidad
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.People,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Capacidad",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-//                    Text(
-//                        text = "${event.} personas",
-//                        style = MaterialTheme.typography.bodyMedium,
-//                        fontWeight = FontWeight.Medium
-//                    )
                 }
             }
         }

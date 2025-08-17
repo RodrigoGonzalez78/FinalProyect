@@ -1,4 +1,4 @@
-package com.example.finalproyect.presenter.ticket_detail
+package com.example.finalproyect.presenter.ticket_detail.components
 
 
 import androidx.compose.foundation.layout.*
@@ -12,7 +12,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.finalproyect.domain.model.Ticket
 import com.example.finalproyect.domain.model.TicketType
-import com.example.finalproyect.utils.toLocalDateTime
 
 @Composable
 fun TicketInfoSection(

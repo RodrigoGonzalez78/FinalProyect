@@ -22,7 +22,6 @@ import com.example.finalproyect.domain.model.TicketType
 @Composable
 fun TicketTypesSection(
     uiState: EventDetailUiState,
-    onUpdateTicketType: (Int, String, Double, String?, Int) -> Unit,
     onDeleteTicketType: (Int) -> Unit
 ) {
     var selectedTicketTypeForEdit by remember { mutableStateOf<TicketType?>(null) }
@@ -90,21 +89,7 @@ fun TicketTypesSection(
         }
     }
 
-    // Diálogo para editar tipo de ticket
-    selectedTicketTypeForEdit?.let { ticketType ->
-        EditTicketTypeDialog(
-            ticketType = ticketType,
-            onDismiss = { selectedTicketTypeForEdit = null },
-            onUpdateTicketType = { name, price, description, available ->
-                onUpdateTicketType(ticketType.id, name, price, description, available)
-                selectedTicketTypeForEdit = null
-            },
-            onDelete = {
-                onDeleteTicketType(ticketType.id)
-                selectedTicketTypeForEdit = null
-            }
-        )
-    }
+
 }
 
 @Composable
@@ -142,10 +127,10 @@ private fun TicketTypeItem(
                 )
             }
 
-            if (ticketType.description != null && ticketType.description.isNotBlank()) {
+            if (ticketType.description.isNullOrBlank().not()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = ticketType.description,
+                    text = ticketType.description?:"",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -160,7 +145,7 @@ private fun TicketTypeItem(
             ) {
                 Column {
                     Text(
-                        text = "Disponibles: ${ticketType.available}",
+                        text = "Disponibles: ${ticketType.available - ticketType.sold}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

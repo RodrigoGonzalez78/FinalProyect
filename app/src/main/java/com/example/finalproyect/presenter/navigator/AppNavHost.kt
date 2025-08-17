@@ -12,6 +12,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.finalproyect.presenter.create_notification.CreateNotificationScreen
+import com.example.finalproyect.presenter.create_ticket_type.CreateTicketTypeScreen
 import com.example.finalproyect.presenter.event_detail.EventDetailScreen
 import com.example.finalproyect.presenter.home.HomeScreen
 import com.example.finalproyect.presenter.login.LoginScreen
@@ -60,6 +62,18 @@ sealed interface AppDestination {
         val eventId: String
     ) : AppDestination
 
+    @Serializable
+    data class CreateNotification(
+        val eventId: String,
+        val eventName:String
+    ) : AppDestination
+
+    @Serializable
+    data class CreateTicketType(
+        val eventId: String,
+        val eventName:String
+    ) : AppDestination
+
 
     @Serializable
     data class Scanner(
@@ -79,6 +93,14 @@ fun NavHostController.navigateToTicketsDetails(eventId: String) {
 
 fun NavHostController.navigateToPublicEvent(eventId: String) {
     navigate(AppDestination.PublicEvent(eventId))
+}
+
+fun NavHostController.navigateToCreateNotification(eventId: String,eventName: String) {
+    navigate(AppDestination.CreateNotification(eventId,eventName))
+}
+
+fun NavHostController.navigateToCreateTicketType(eventId: String,eventName: String) {
+    navigate(AppDestination.CreateTicketType(eventId,eventName))
 }
 
 fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
@@ -160,6 +182,24 @@ fun AppNavHost(
 
         }
 
+        composable<AppDestination.CreateNotification> { backStackEntry ->
+            val eventDetails: AppDestination.CreateNotification = backStackEntry.toRoute()
+             CreateNotificationScreen(
+                navController = navController,
+                eventId = eventDetails.eventId,
+                 eventName = eventDetails.eventName
+            )
+        }
+
+        composable<AppDestination.CreateTicketType> { backStackEntry ->
+            val eventDetails: AppDestination.CreateTicketType = backStackEntry.toRoute()
+            CreateTicketTypeScreen(
+                navController = navController,
+                eventId = eventDetails.eventId,
+                eventName = eventDetails.eventName
+            )
+        }
+
         composable<AppDestination.TicketsDetails> { backStackEntry ->
             val ticketDetails: AppDestination.TicketsDetails = backStackEntry.toRoute()
 
@@ -167,9 +207,6 @@ fun AppNavHost(
                 navController= navController,
                 eventId = ticketDetails.eventId
             )
-
-
-
         }
 
 

@@ -18,6 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.finalproyect.domain.model.Notification
+import com.example.finalproyect.presenter.ticket_detail.components.EventInfoSection
+import com.example.finalproyect.presenter.ticket_detail.components.TicketActionsSection
+import com.example.finalproyect.presenter.ticket_detail.components.TicketInfoSection
+import com.example.finalproyect.presenter.ticket_detail.components.TicketQRSection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)

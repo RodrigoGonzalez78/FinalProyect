@@ -1,4 +1,4 @@
-package com.example.finalproyect.presenter.ticket_detail
+package com.example.finalproyect.presenter.ticket_detail.components
 
 
 import android.os.Build

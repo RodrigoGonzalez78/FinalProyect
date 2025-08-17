@@ -37,7 +37,7 @@ class NewEventViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(NewEventUiState())
     val uiState: StateFlow<NewEventUiState> = _uiState.asStateFlow()
 
-    // Lista de ubicaciones obtenidas de Google Maps
+
     private val _locations = MutableStateFlow<List<Location>>(emptyList())
     val locations: StateFlow<List<Location>> = _locations.asStateFlow()
 
@@ -48,7 +48,7 @@ class NewEventViewModel @Inject constructor(
     private fun loadNearbyLocations() {
         viewModelScope.launch {
             try {
-                // Coordenadas de Corrientes, Argentina como ejemplo
+
                 val latitude = -27.467
                 val longitude = -58.830
                 val radius = 5000 // 5km
@@ -57,7 +57,7 @@ class NewEventViewModel @Inject constructor(
                     latitude = latitude,
                     longitude = longitude,
                     radius = radius,
-                    type = "establishment" // Puedes cambiar el tipo según necesites
+                    type = "establishment"
                 )
 
                 result.fold(
@@ -164,7 +164,7 @@ class NewEventViewModel @Inject constructor(
 
                 uploadResult.fold(
                     onSuccess = { imageUrl ->
-                        // Una vez subida la imagen, crear el evento
+
                         createEventWithImageUrl(imageUrl)
                     },
                     onFailure = { ex ->

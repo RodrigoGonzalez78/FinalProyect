@@ -44,13 +44,13 @@ fun EventBanner(
             .height(180.dp)
     ) {
         AsyncImage(
-            model = eventDetail.event.banner ?: "https://via.placeholder.com/800x400",
+            model = eventDetail.event.banner,
             contentDescription = eventDetail.event.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Gradiente para mejorar legibilidad
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,14 +84,12 @@ fun EventBanner(
             )
         }
 
-        // Botones de acción en la esquina superior derecha
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Indicador de estado del evento
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
@@ -104,7 +102,6 @@ fun EventBanner(
                 )
             }
 
-            // Botón de eliminar evento (solo para admin principal)
             if (uiState.canDeleteEvent) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -126,7 +123,6 @@ fun EventBanner(
         }
     }
 
-    // Diálogo de confirmación para eliminar evento
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },

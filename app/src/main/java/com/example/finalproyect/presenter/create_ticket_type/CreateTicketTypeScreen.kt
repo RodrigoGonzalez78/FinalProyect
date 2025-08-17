@@ -1,15 +1,30 @@
 package com.example.finalproyect.presenter.create_ticket_type
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.ConfirmationNumber
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,42 +41,98 @@ fun CreateTicketTypeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
 
-    // Manejar éxito de creación
+
     LaunchedEffect(uiState.createSuccess) {
         if (uiState.createSuccess) {
             navController.popBackStack()
         }
     }
 
-    // Manejar mensajes de éxito
+
     LaunchedEffect(uiState.successMessage) {
-        uiState.successMessage?.let {
+        uiState.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
             viewModel.clearSuccessMessage()
         }
     }
 
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long,
+                actionLabel = "Cerrar"
+            )
+        }
+    }
+
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = if (uiState.error != null) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            MaterialTheme.colorScheme.inverseSurface
+                        },
+                        contentColor = if (uiState.error != null) {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        } else {
+                            MaterialTheme.colorScheme.inverseOnSurface
+                        }
+                    )
+                }
+            )
+        },
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "Crear Tipo de Ticket",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column {
+                        Text(
+                            text = "Crear Tipo de Ticket",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (eventName.isNotBlank()) {
+                            Text(
+                                text = eventName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                windowInsets = WindowInsets.statusBars
             )
         }
     ) { paddingValues ->
@@ -70,210 +141,292 @@ fun CreateTicketTypeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .imePadding(),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Información del evento
-            if (eventName.isNotBlank()) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Event,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Evento",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = eventName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
-            }
 
-            // Formulario
+            Text(
+                text = "Información del Ticket",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::updateName,
-                label = { Text("Nombre del ticket *") },
+                label = { Text("Nombre del ticket") },
                 placeholder = { Text("Ej: General, VIP, Estudiante") },
                 isError = uiState.nameError != null,
                 supportingText = {
                     uiState.nameError?.let { error ->
                         Text(
                             text = error,
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.ConfirmationNumber,
-                        contentDescription = null
+                        imageVector = Icons.Outlined.ConfirmationNumber,
+                        contentDescription = null,
+                        tint = if (uiState.nameError != null) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next,
+                    capitalization = KeyboardCapitalization.Words
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
+            // Descripción
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = viewModel::updateDescription,
-                label = { Text("Descripción *") },
-                placeholder = { Text("Describe qué incluye este tipo de ticket") },
+                label = { Text("Descripción") },
+                placeholder = { Text("Describe qué incluye este tipo de ticket...") },
                 isError = uiState.descriptionError != null,
                 supportingText = {
                     uiState.descriptionError?.let { error ->
                         Text(
                             text = error,
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Description,
-                        contentDescription = null
+                        imageVector = Icons.Outlined.Description,
+                        contentDescription = null,
+                        tint = if (uiState.descriptionError != null) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     )
                 },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 4
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp),
+                minLines = 3,
+                maxLines = 5,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next,
+                    capitalization = KeyboardCapitalization.Sentences
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
+
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+
                 OutlinedTextField(
                     value = uiState.price,
                     onValueChange = viewModel::updatePrice,
-                    label = { Text("Precio *") },
+                    label = { Text("Precio") },
                     placeholder = { Text("0.00") },
                     isError = uiState.priceError != null,
                     supportingText = {
-                        uiState.priceError?.let { error ->
+                        if (uiState.priceError != null) {
                             Text(
-                                text = error,
-                                color = MaterialTheme.colorScheme.error
+                                text = uiState.priceError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        } else {
+                            Text(
+                                text = "USD",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.AttachMoney,
-                            contentDescription = null
+                            imageVector = Icons.Outlined.AttachMoney,
+                            contentDescription = null,
+                            tint = if (uiState.priceError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Right) }
+                    )
                 )
+
 
                 OutlinedTextField(
                     value = uiState.quantity,
                     onValueChange = viewModel::updateQuantity,
-                    label = { Text("Cantidad *") },
+                    label = { Text("Cantidad") },
                     placeholder = { Text("100") },
                     isError = uiState.quantityError != null,
                     supportingText = {
-                        uiState.quantityError?.let { error ->
+                        if (uiState.quantityError != null) {
                             Text(
-                                text = error,
-                                color = MaterialTheme.colorScheme.error
+                                text = uiState.quantityError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        } else {
+                            Text(
+                                text = "Disponibles",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Numbers,
-                            contentDescription = null
+                            imageVector = Icons.Outlined.Numbers,
+                            contentDescription = null,
+                            tint = if (uiState.quantityError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    )
                 )
             }
 
-            // Mensaje de error
-            if (uiState.error != null) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Error,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = uiState.error!!,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botones
+            // Botones con mejor diseño
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedButton(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f),
-                    enabled = !uiState.isCreating
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    enabled = !uiState.isCreating,
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(
+                        width = 1.5.dp,
+                        color = MaterialTheme.colorScheme.outline
+                    )
                 ) {
-                    Text("Cancelar")
+                    Text(
+                        text = "Cancelar",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
                 Button(
                     onClick = {
+                        focusManager.clearFocus()
                         val id = eventId.toIntOrNull()
                         if (id != null) {
                             viewModel.createTicketType(id)
                         }
                     },
-                    modifier = Modifier.weight(1f),
-                    enabled = uiState.canCreate
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    enabled = uiState.canCreate,
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
+                    )
                 ) {
-                    if (uiState.isCreating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text("Crear Ticket")
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (uiState.isCreating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Creando...",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Crear Ticket",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
+
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

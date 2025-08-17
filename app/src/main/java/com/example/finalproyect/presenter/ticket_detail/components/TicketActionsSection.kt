@@ -1,4 +1,4 @@
-package com.example.finalproyect.presenter.ticket_detail
+package com.example.finalproyect.presenter.ticket_detail.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons

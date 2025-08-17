@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.finalproyect.domain.model.TicketType
+
 @Composable
 fun TicketTypePublicItem(
     ticketType: TicketType,
@@ -43,7 +44,7 @@ fun TicketTypePublicItem(
 
                     if (ticketType.description.isNullOrBlank().not()) {
                         Text(
-                            text = ticketType.description?:"",
+                            text = ticketType.description ?: "",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -69,7 +70,7 @@ fun TicketTypePublicItem(
                     Icon(
                         imageVector = Icons.Default.Inventory,
                         contentDescription = null,
-                        tint = if (ticketType.available > 10) {
+                        tint = if ((ticketType.available - ticketType.sold) > 10) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.error
@@ -78,9 +79,9 @@ fun TicketTypePublicItem(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${ticketType.available} disponibles",
+                        text = "${ticketType.available - ticketType.sold} disponibles",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (ticketType.available > 10) {
+                        color = if ((ticketType.available - ticketType.sold) > 10) {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         } else {
                             MaterialTheme.colorScheme.error
@@ -90,7 +91,7 @@ fun TicketTypePublicItem(
 
                 Button(
                     onClick = onPurchaseClick,
-                    enabled = ticketType.available > 0
+                    enabled = (ticketType.available - ticketType.sold) > 0
                 ) {
                     Icon(
                         imageVector = Icons.Default.ShoppingCart,
@@ -102,14 +103,14 @@ fun TicketTypePublicItem(
                 }
             }
 
-            if (ticketType.available <= 10 && ticketType.available > 0) {
+            if ((ticketType.available - ticketType.sold) <= 10 && (ticketType.available - ticketType.sold) > 0) {
                 Text(
-                    text = "¡Últimas ${ticketType.available} unidades!",
+                    text = "¡Últimas ${(ticketType.available - ticketType.sold)} unidades!",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Medium
                 )
-            } else if (ticketType.available == 0) {
+            } else if ((ticketType.available - ticketType.sold) == 0) {
                 Text(
                     text = "Agotado",
                     style = MaterialTheme.typography.bodySmall,

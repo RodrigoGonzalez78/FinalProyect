@@ -22,7 +22,6 @@ import com.example.finalproyect.domain.usecase.organizers.UpdateOrganizerRoleUse
 import com.example.finalproyect.domain.usecase.ticket.GetUserTicketForEventUseCase
 import com.example.finalproyect.domain.usecase.ticket.PurchaseTicketUseCase
 import com.example.finalproyect.domain.usecase.ticket_type.CreateTicketTypeUseCase
-import com.example.finalproyect.domain.usecase.ticket_type.CreateTicketTypeUseCase_Factory
 import com.example.finalproyect.domain.usecase.ticket_type.DeleteTicketTypeUseCase
 import com.example.finalproyect.domain.usecase.ticket_type.GetTicketTypesByEventUseCase
 import com.example.finalproyect.domain.usecase.ticket_type.UpdateTicketTypeUseCase
@@ -39,15 +38,12 @@ class EventDetailsViewModel @Inject constructor(
     private val getEventDetailUseCase: GetEventDetailUseCase,
     private val deleteEventUseCase: DeleteEventUseCase,
     private val getTicketTypesByEventUseCase: GetTicketTypesByEventUseCase,
-    private val createTicketTypeUseCase: CreateTicketTypeUseCase,
-    private val updateTicketTypeUseCase: UpdateTicketTypeUseCase,
     private val deleteTicketTypeUseCase: DeleteTicketTypeUseCase,
     private val createOrganizerUseCase: CreateOrganizerUseCase,
     private val getOrganizersByEventUseCase: GetOrganizersByEventUseCase,
     private val updateOrganizerRoleUseCase: UpdateOrganizerRoleUseCase,
     private val deleteOrganizerUseCase: DeleteOrganizerUseCase,
     private val getUserTicketForEventUseCase: GetUserTicketForEventUseCase,
-    private val purchaseTicketUseCase: PurchaseTicketUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EventDetailUiState())
@@ -134,69 +130,6 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-    fun createTicketType(name: String, price: Double, description: String?, available: Int) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isCreatingTicketType = true)
-
-            val result = createTicketTypeUseCase(
-                eventId = currentEventId,
-                name = name,
-                description = description,
-                available = available,
-                price = price
-            )
-
-            result.fold(
-                onSuccess = { ticketType ->
-                    _uiState.value = _uiState.value.copy(
-                        isCreatingTicketType = false,
-                        ticketTypes = _uiState.value.ticketTypes + ticketType,
-                        successMessage = "Tipo de ticket creado exitosamente"
-                    )
-                },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isCreatingTicketType = false,
-                        error = error.message ?: "Error al crear tipo de ticket"
-                    )
-                }
-            )
-        }
-    }
-
-    fun updateTicketType(ticketTypeId: Int, name: String, price: Double, description: String?, available: Int) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isUpdatingTicketType = true)
-
-            val result = updateTicketTypeUseCase(
-                eventId = currentEventId,
-                ticketTypeId = ticketTypeId,
-                name = name,
-                description = description,
-                available = available,
-                price = price
-            )
-
-            result.fold(
-                onSuccess = { updatedTicketType ->
-                    val updatedList = _uiState.value.ticketTypes.map { ticketType ->
-                        if (ticketType.id == ticketTypeId) updatedTicketType else ticketType
-                    }
-                    _uiState.value = _uiState.value.copy(
-                        isUpdatingTicketType = false,
-                        ticketTypes = updatedList,
-                        successMessage = "Tipo de ticket actualizado exitosamente"
-                    )
-                },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isUpdatingTicketType = false,
-                        error = error.message ?: "Error al actualizar tipo de ticket"
-                    )
-                }
-            )
-        }
-    }
 
     fun deleteTicketType(ticketTypeId: Int) {
         viewModelScope.launch {
@@ -355,33 +288,7 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-    fun purchaseTicket(ticketTypeId: Int) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isPurchasingTicket = true)
 
-            val result = purchaseTicketUseCase(ticketTypeId)
-
-            result.fold(
-                onSuccess = { purchaseResult ->
-                    _uiState.value = _uiState.value.copy(
-                        isPurchasingTicket = false,
-                        userTicket = purchaseResult.ticket,
-                        successMessage = purchaseResult.message
-                    )
-                    // Recargar tipos de ticket para actualizar disponibilidad
-                    loadTicketTypes()
-                },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isPurchasingTicket = false,
-                        error = error.message ?: "Error al comprar ticket"
-                    )
-                }
-            )
-        }
-    }
-
-    // EVENT MANAGEMENT
     fun deleteEvent() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDeletingEvent = true)
@@ -405,7 +312,6 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-    // UTILITY METHODS
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

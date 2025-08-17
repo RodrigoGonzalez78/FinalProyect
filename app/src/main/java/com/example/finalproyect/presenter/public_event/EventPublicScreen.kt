@@ -39,7 +39,7 @@ fun EventPublicScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showPurchaseDialog by remember { mutableStateOf(false) }
 
-    // Cargar datos cuando se crea el composable
+
     LaunchedEffect(eventId) {
         val id = eventId.toIntOrNull()
         if (id != null && id > 0) {
@@ -47,15 +47,15 @@ fun EventPublicScreen(
         }
     }
 
-    // Manejar éxito de compra
+
     LaunchedEffect(uiState.purchaseSuccess) {
         if (uiState.purchaseSuccess) {
             showPurchaseDialog = false
-            // Aquí podrías navegar a la pantalla del ticket o mostrar un mensaje
+
         }
     }
 
-    // Manejar mensajes de éxito
+
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
             viewModel.clearSuccessMessage()

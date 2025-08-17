@@ -43,8 +43,8 @@ fun EventPublicBanner(
                 .fillMaxWidth()
                 .height(250.dp)
         ) {
-            // Imagen de fondo
-            if (event.banner.isNullOrBlank()) {
+
+            if (event.banner.isNullOrBlank().not()) {
                 AsyncImage(
                     model = event.banner,
                     contentDescription = "Imagen del evento",
@@ -66,7 +66,7 @@ fun EventPublicBanner(
                 )
             }
 
-            // Overlay oscuro para mejorar legibilidad
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -80,7 +80,7 @@ fun EventPublicBanner(
                     )
             )
 
-            // Contenido del banner
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -126,7 +126,7 @@ fun EventPublicBanner(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${location.name}",
+                            text = location.name,
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White
                         )

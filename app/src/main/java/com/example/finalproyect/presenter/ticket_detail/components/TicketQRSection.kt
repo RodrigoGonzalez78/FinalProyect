@@ -1,4 +1,4 @@
-package com.example.finalproyect.presenter.ticket_detail
+package com.example.finalproyect.presenter.ticket_detail.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
