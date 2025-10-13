@@ -14,7 +14,7 @@ interface AuthRepository {
         password: String,
         birthday: String,
         phone: String
-    ): Result<AuthResult>
+    ): Result<Boolean>
     suspend fun logout()
     fun isLoggedIn(): Flow<Boolean>
 }

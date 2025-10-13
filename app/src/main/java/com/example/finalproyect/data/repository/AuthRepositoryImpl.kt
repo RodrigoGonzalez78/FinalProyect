@@ -1,6 +1,7 @@
 package com.example.finalproyect.data.repository
 
 
+import android.text.BoringLayout
 import android.util.Log
 import com.example.finalproyect.data.local.dao.UserDao
 import com.example.finalproyect.data.mappers.toAuthResult
@@ -14,6 +15,8 @@ import com.example.finalproyect.domain.repository.AuthRepository
 import com.example.finalproyect.utils.PreferenceManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import okio.IOException
+import retrofit2.HttpException
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -43,7 +46,7 @@ class AuthRepositoryImpl @Inject constructor(
         password: String,
         birthday: String,
         phone: String
-    ): Result<AuthResult> {
+    ): Result<Boolean> {
         return try {
             val request = RegisterRequest(
                 email = email,
@@ -53,15 +56,19 @@ class AuthRepositoryImpl @Inject constructor(
                 birthday = birthday,
                 phone = phone
             )
-            val response = authApi.register(request)
-            preferenceManager.saveAuthToken(response.token)
-            preferenceManager.saveCurrentUserEmail(response.email)
-
-            Result.success(response.toAuthResult())
+            authApi.register(request)
+            Result.success(true)
+        } catch (e: HttpException) {
+            Result.failure(Exception("Error del servidor: ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión. Verifica tu internet"))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Error inesperado: ${e.message}"))
         }
     }
+
+
+
 
     override suspend fun logout() {
         preferenceManager.clearAuthToken()

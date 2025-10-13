@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.Event
 import com.example.finalproyect.domain.repository.GoogleMapsRepository
 import com.example.finalproyect.domain.usecase.event.CreateEventUseCase
-import com.example.finalproyect.domain.usecase.event.UpdateEventUseCase
 import com.example.finalproyect.domain.usecase.upload.UploadImageUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.model.LatLng
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -267,8 +265,7 @@ data class NewEventUiState(
                 && description.isNotBlank()
                 && selectedLocation != null
                 && max != null
-                && startTime < endTime
-                && bannerUri != null // Validar que hay imagen seleccionada
+                && bannerUri != null
     }
 }
 

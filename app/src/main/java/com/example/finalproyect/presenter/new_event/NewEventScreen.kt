@@ -53,6 +53,7 @@ import java.util.*
 @Composable
 fun NewEventScreen(
     navController: NavHostController,
+    EventId:String?=null,
     viewModel: NewEventViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()

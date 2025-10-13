@@ -1,33 +1,25 @@
 package com.example.finalproyect.presenter.event_detail
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.model.EventDetail
+import com.example.finalproyect.domain.model.Notification
 import com.example.finalproyect.domain.model.Organizer
 import com.example.finalproyect.domain.model.Ticket
 import com.example.finalproyect.domain.model.TicketType
-import com.example.finalproyect.domain.usecase.auth.LoginUseCase
 import com.example.finalproyect.domain.usecase.event.DeleteEventUseCase
 import com.example.finalproyect.domain.usecase.event.EventDetailWithPermissions
 import com.example.finalproyect.domain.usecase.event.GetEventDetailUseCase
-import com.example.finalproyect.domain.usecase.event.UpdateEventUseCase
-import com.example.finalproyect.domain.usecase.organizers.CheckUserOrganizerPermissionsUseCase
+import com.example.finalproyect.domain.usecase.notification.GetNotificationsByEventUseCase
 import com.example.finalproyect.domain.usecase.organizers.CreateOrganizerUseCase
 import com.example.finalproyect.domain.usecase.organizers.DeleteOrganizerUseCase
 import com.example.finalproyect.domain.usecase.organizers.GetOrganizersByEventUseCase
 import com.example.finalproyect.domain.usecase.organizers.UpdateOrganizerRoleUseCase
 import com.example.finalproyect.domain.usecase.ticket.GetUserTicketForEventUseCase
-import com.example.finalproyect.domain.usecase.ticket.PurchaseTicketUseCase
-import com.example.finalproyect.domain.usecase.ticket_type.CreateTicketTypeUseCase
 import com.example.finalproyect.domain.usecase.ticket_type.DeleteTicketTypeUseCase
 import com.example.finalproyect.domain.usecase.ticket_type.GetTicketTypesByEventUseCase
-import com.example.finalproyect.domain.usecase.ticket_type.UpdateTicketTypeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -44,6 +36,7 @@ class EventDetailsViewModel @Inject constructor(
     private val updateOrganizerRoleUseCase: UpdateOrganizerRoleUseCase,
     private val deleteOrganizerUseCase: DeleteOrganizerUseCase,
     private val getUserTicketForEventUseCase: GetUserTicketForEventUseCase,
+    private val getNotificationsByEventUseCase: GetNotificationsByEventUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EventDetailUiState())
@@ -83,6 +76,7 @@ class EventDetailsViewModel @Inject constructor(
                         loadTicketTypes()
                         loadOrganizers()
                         loadUserTicket()
+                        loadNotifications()
                     },
                     onFailure = { error ->
                         Log.e("Varibles view",eventId)
@@ -106,7 +100,6 @@ class EventDetailsViewModel @Inject constructor(
         _activeSection.value = section
     }
 
-    // TICKET TYPES
     private fun loadTicketTypes() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingTicketTypes = true, ticketTypesError = null)
@@ -130,6 +123,33 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
+
+    private fun loadNotifications(){
+        Log.e("Carga","No cargar ################")
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingNotifications = true, notificationError = null)
+
+            val result = getNotificationsByEventUseCase(currentEventId)
+            result.fold(
+
+                onSuccess = { notificationsList ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingNotifications = false,
+                        notification = notificationsList,
+                        notificationError = null
+                    )
+                },
+
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingNotifications = false,
+                        notificationError = error.message ?: "Error al cargar las notificaciones"
+                    )
+                }
+
+            )
+        }
+    }
 
     fun deleteTicketType(ticketTypeId: Int) {
         viewModelScope.launch {
@@ -341,6 +361,11 @@ data class EventDetailUiState(
     val ticketTypes: List<TicketType> = emptyList(),
     val isLoadingTicketTypes: Boolean = false,
     val ticketTypesError: String? = null,
+
+    //Notificaciones
+    val notification: List<Notification> = emptyList(),
+    val isLoadingNotifications: Boolean = false,
+    val notificationError:String? = null,
 
     // Organizadores
     val organizers: List<Organizer> = emptyList(),

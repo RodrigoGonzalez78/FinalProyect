@@ -78,7 +78,7 @@ class RegisterViewModel @Inject constructor(
             nameError = if (currentState.name.isBlank()) "El nombre es obligatorio" else "",
             lastNameError = if (currentState.lastName.isBlank()) "El apellido es obligatorio" else "",
             emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentState.email).matches()) "Formato de email inválido" else "",
-            passwordError = if (currentState.password.length < 6) "La contraseña debe tener al menos 6 caracteres" else "",
+            passwordError = validatePassword(currentState.password),
             confirmPasswordError = if (currentState.password != currentState.confirmPassword) "Las contraseñas no coinciden" else "",
             birthdayError = if (currentState.birthday.isAfter(LocalDate.now().minusYears(18))) "Debes ser mayor de 18 años" else "",
             phoneError = if (currentState.phone.isNotBlank() && !isPhoneValid(currentState.phone)) "Formato de teléfono inválido" else ""
@@ -99,6 +99,15 @@ class RegisterViewModel @Inject constructor(
         if (errors.hasErrors()) return
 
         register()
+    }
+    private fun validatePassword(password: String): String {
+        return when {
+            password.length < 8 -> "La contraseña debe tener al menos 8 caracteres"
+            !password.any { it.isDigit() } -> "La contraseña debe contener al menos un número"
+            !password.any { it.isLowerCase() } -> "La contraseña debe contener al menos una minúscula"
+            !password.any { it.isUpperCase() } -> "La contraseña debe contener al menos una mayúscula"
+            else -> ""
+        }
     }
 
     private fun isPhoneValid(phone: String): Boolean {

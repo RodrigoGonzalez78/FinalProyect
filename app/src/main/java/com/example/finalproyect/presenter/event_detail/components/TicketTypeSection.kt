@@ -18,11 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.finalproyect.domain.model.TicketType
+
 @Composable
 fun TicketTypesSection(
     uiState: EventDetailUiState,
-    onDeleteTicketType: (Int) -> Unit
+    navController: NavHostController,
 ) {
     var selectedTicketTypeForEdit by remember { mutableStateOf<TicketType?>(null) }
 
@@ -82,8 +84,9 @@ fun TicketTypesSection(
                 TicketTypeItem(
                     ticketType = ticketType,
                     canEdit = uiState.canManageTicketTypes,
-                    onEdit = { selectedTicketTypeForEdit = ticketType },
-                    onDelete = { onDeleteTicketType(ticketType.id) }
+                    onEdit = {
+
+                    }
                 )
             }
         }
@@ -97,7 +100,6 @@ private fun TicketTypeItem(
     ticketType: TicketType,
     canEdit: Boolean,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -130,7 +132,7 @@ private fun TicketTypeItem(
             if (ticketType.description.isNullOrBlank().not()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = ticketType.description?:"",
+                    text = ticketType.description ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

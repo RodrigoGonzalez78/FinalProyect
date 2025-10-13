@@ -54,7 +54,7 @@ fun EventDetailContent(
                     navController = navController
                 )
 
-                "notifications" -> NotificationsSection(uiState = uiState)
+                "notifications" -> NotificationsSection(uiState = uiState, viewModel)
                 "organizers" -> OrganizersSection(
                     uiState = uiState,
                     onUpdateOrganizerRole = {organizerId,rolId->viewModel.updateOrganizerRole(organizerId,rolId)},
@@ -63,7 +63,7 @@ fun EventDetailContent(
 
                 "ticketTypes" -> TicketTypesSection(
                     uiState = uiState,
-                    onDeleteTicketType = {id->viewModel.deleteTicketType(id)}
+                    navController
                 )
             }
         }

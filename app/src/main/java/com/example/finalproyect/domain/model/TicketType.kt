@@ -1,6 +1,8 @@
 package com.example.finalproyect.domain.model
 
+import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
+
 
 data class TicketType(
     val id: Int,
