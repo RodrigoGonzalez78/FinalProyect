@@ -137,4 +137,35 @@ class TicketTypeRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun getTicketTypeById(ticketTypeId: Int): Result<TicketType> {
+        return try {
+            val response = ticketTypeApi.getTicketTypeById(ticketTypeId)
+
+            if (response.isSuccessful) {
+                response.body()?.let { ticketTypeDto ->
+                    // Guardar en base de datos local
+                    val ticketTypeEntity = ticketTypeDto.toTicketTypeEntity()
+                    ticketTypeDao.insertTicketType(ticketTypeEntity)
+
+                    // Convertir a modelo de dominio y retornar
+                    val ticketType = ticketTypeDto.toTicketType()
+                    Result.success(ticketType)
+                } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            // En caso de error de red, intentar obtener de base de datos local
+            try {
+                val localTicketType = ticketTypeDao.getTicketTypeById(ticketTypeId)
+                localTicketType?.let {
+                    Result.success(it.toTicketType())
+                } ?: Result.failure(Exception("TicketType no encontrado localmente"))
+            } catch (localError: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
 }

@@ -65,15 +65,15 @@ sealed interface AppDestination {
     @Serializable
     data class CreateNotification(
         val eventId: String,
-        val eventName:String
+        val eventName: String
     ) : AppDestination
 
     @Serializable
     data class CreateTicketType(
         val eventId: String,
-        val eventName:String
+        val eventName: String,
+        val ticketTypeId: String? = null // Nullable para crear o editar
     ) : AppDestination
-
 
     @Serializable
     data class Scanner(
@@ -95,12 +95,16 @@ fun NavHostController.navigateToPublicEvent(eventId: String) {
     navigate(AppDestination.PublicEvent(eventId))
 }
 
-fun NavHostController.navigateToCreateNotification(eventId: String,eventName: String) {
-    navigate(AppDestination.CreateNotification(eventId,eventName))
+fun NavHostController.navigateToCreateNotification(eventId: String, eventName: String) {
+    navigate(AppDestination.CreateNotification(eventId, eventName))
 }
 
-fun NavHostController.navigateToCreateTicketType(eventId: String,eventName: String) {
-    navigate(AppDestination.CreateTicketType(eventId,eventName))
+fun NavHostController.navigateToCreateTicketType(eventId: String, eventName: String) {
+    navigate(AppDestination.CreateTicketType(eventId, eventName, ticketTypeId = null))
+}
+
+fun NavHostController.navigateToEditTicketType(eventId: String, eventName: String, ticketTypeId: String) {
+    navigate(AppDestination.CreateTicketType(eventId, eventName, ticketTypeId = ticketTypeId))
 }
 
 fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
@@ -168,8 +172,6 @@ fun AppNavHost(
                 navController = navController,
                 eventId = eventDetails.eventId
             )
-
-
         }
 
         composable<AppDestination.PublicEvent> { backStackEntry ->
@@ -178,16 +180,14 @@ fun AppNavHost(
                 navController = navController,
                 eventId = eventDetails.eventId
             )
-
-
         }
 
         composable<AppDestination.CreateNotification> { backStackEntry ->
             val eventDetails: AppDestination.CreateNotification = backStackEntry.toRoute()
-             CreateNotificationScreen(
+            CreateNotificationScreen(
                 navController = navController,
                 eventId = eventDetails.eventId,
-                 eventName = eventDetails.eventName
+                eventName = eventDetails.eventName
             )
         }
 
@@ -196,7 +196,8 @@ fun AppNavHost(
             CreateTicketTypeScreen(
                 navController = navController,
                 eventId = eventDetails.eventId,
-                eventName = eventDetails.eventName
+                eventName = eventDetails.eventName,
+                ticketTypeId = eventDetails.ticketTypeId // Pasar el ID para edición
             )
         }
 
@@ -204,15 +205,15 @@ fun AppNavHost(
             val ticketDetails: AppDestination.TicketsDetails = backStackEntry.toRoute()
 
             TicketDetailScreen(
-                navController= navController,
+                navController = navController,
                 eventId = ticketDetails.eventId
             )
         }
 
-
         composable<AppDestination.Home> {
             HomeScreen(navController)
         }
+
         composable<AppDestination.Scanner> { backStackEntry ->
             val scanner: AppDestination.Scanner = backStackEntry.toRoute()
 

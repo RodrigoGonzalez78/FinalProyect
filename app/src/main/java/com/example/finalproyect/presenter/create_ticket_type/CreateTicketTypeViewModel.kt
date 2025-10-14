@@ -4,6 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.finalproyect.domain.usecase.ticket_type.CreateTicketTypeUseCase
+import com.example.finalproyect.domain.usecase.ticket_type.DeleteTicketTypeUseCase
+import com.example.finalproyect.domain.usecase.ticket_type.GetTicketTypeByIdUseCase
+import com.example.finalproyect.domain.usecase.ticket_type.UpdateTicketTypeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,13 +16,52 @@ import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
 
+
 @HiltViewModel
 class CreateTicketTypeViewModel @Inject constructor(
-    private val createTicketTypeUseCase: CreateTicketTypeUseCase
+    private val createTicketTypeUseCase: CreateTicketTypeUseCase,
+    private val getTicketTypeByIdUseCase: GetTicketTypeByIdUseCase,
+    private val deleteTicketTypeUseCase: DeleteTicketTypeUseCase,
+    private val updateTicketTypeUseCase: UpdateTicketTypeUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateTicketTypeUiState())
     val uiState: StateFlow<CreateTicketTypeUiState> = _uiState
+
+    fun loadTicketType(ticketTypeId: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            try {
+                val result = getTicketTypeByIdUseCase(ticketTypeId)
+
+                result.fold(
+                    onSuccess = { ticketType ->
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            ticketTypeId = ticketType.id,
+                            name = ticketType.name,
+                            description = ticketType.description ?: "",
+                            price = ticketType.price.toString(),
+                            quantity = ticketType.available.toString(),
+                            isEditMode = true
+                        )
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = error.message ?: "Error al cargar el tipo de ticket"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Error desconocido"
+                )
+            }
+        }
+    }
 
     fun updateName(name: String) {
         _uiState.value = _uiState.value.copy(
@@ -103,11 +145,19 @@ class CreateTicketTypeViewModel @Inject constructor(
         }
     }
 
-    fun createTicketType(eventId: Int) {
-        if (!_uiState.value.canCreate) return
+    fun saveTicketType(eventId: Int) {
+        if (!_uiState.value.canSave) return
 
+        if (_uiState.value.isEditMode) {
+            updateTicketType(eventId)
+        } else {
+            createTicketType(eventId)
+        }
+    }
+
+    private fun createTicketType(eventId: Int) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isCreating = true, error = null)
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
 
             try {
                 val result = createTicketTypeUseCase(
@@ -115,31 +165,112 @@ class CreateTicketTypeViewModel @Inject constructor(
                     name = _uiState.value.name.trim(),
                     description = _uiState.value.description.trim(),
                     price = _uiState.value.price.toDouble(),
-                    available =_uiState.value.quantity.toInt()
+                    available = _uiState.value.quantity.toInt()
                 )
 
                 result.fold(
                     onSuccess = {
                         _uiState.value = _uiState.value.copy(
-                            isCreating = false,
-                            createSuccess = true,
+                            isSaving = false,
+                            saveSuccess = true,
                             successMessage = "Tipo de ticket creado exitosamente"
                         )
                     },
                     onFailure = { error ->
                         _uiState.value = _uiState.value.copy(
-                            isCreating = false,
+                            isSaving = false,
                             error = error.message ?: "Error al crear el tipo de ticket"
                         )
                     }
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    isCreating = false,
+                    isSaving = false,
                     error = e.message ?: "Error desconocido"
                 )
             }
         }
+    }
+
+    private fun updateTicketType(eventId: Int) {
+        val ticketTypeId = _uiState.value.ticketTypeId ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+
+            try {
+                val result = updateTicketTypeUseCase(
+                    eventId = eventId,
+                    ticketTypeId = ticketTypeId,
+                    name = _uiState.value.name.trim(),
+                    description = _uiState.value.description.trim(),
+                    available = _uiState.value.quantity.toInt(),
+                    price = _uiState.value.price.toDouble()
+                )
+
+                result.fold(
+                    onSuccess = {
+                        _uiState.value = _uiState.value.copy(
+                            isSaving = false,
+                            saveSuccess = true,
+                            successMessage = "Tipo de ticket actualizado exitosamente"
+                        )
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isSaving = false,
+                            error = error.message ?: "Error al actualizar el tipo de ticket"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    error = e.message ?: "Error desconocido"
+                )
+            }
+        }
+    }
+
+    fun deleteTicketType(eventId: Int) {
+        val ticketTypeId = _uiState.value.ticketTypeId ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDeleting = true, error = null)
+
+            try {
+                val result = deleteTicketTypeUseCase(eventId, ticketTypeId)
+
+                result.fold(
+                    onSuccess = {
+                        _uiState.value = _uiState.value.copy(
+                            isDeleting = false,
+                            deleteSuccess = true,
+                            successMessage = "Tipo de ticket eliminado exitosamente"
+                        )
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isDeleting = false,
+                            error = error.message ?: "Error al eliminar el tipo de ticket"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isDeleting = false,
+                    error = e.message ?: "Error desconocido"
+                )
+            }
+        }
+    }
+
+    fun showDeleteDialog() {
+        _uiState.value = _uiState.value.copy(showDeleteDialog = true)
+    }
+
+    fun hideDeleteDialog() {
+        _uiState.value = _uiState.value.copy(showDeleteDialog = false)
     }
 
     fun clearError() {
@@ -155,12 +286,14 @@ class CreateTicketTypeViewModel @Inject constructor(
     }
 }
 
-
-
 data class CreateTicketTypeUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
+
+    // Modo de edición
+    val isEditMode: Boolean = false,
+    val ticketTypeId: Int? = null,
 
     // Campos del formulario
     val name: String = "",
@@ -175,8 +308,11 @@ data class CreateTicketTypeUiState(
     val quantityError: String? = null,
 
     // Estados de operación
-    val isCreating: Boolean = false,
-    val createSuccess: Boolean = false
+    val isSaving: Boolean = false,
+    val saveSuccess: Boolean = false,
+    val isDeleting: Boolean = false,
+    val deleteSuccess: Boolean = false,
+    val showDeleteDialog: Boolean = false
 ) {
     val isFormValid: Boolean
         get() = name.isNotBlank() &&
@@ -188,6 +324,9 @@ data class CreateTicketTypeUiState(
                 priceError == null &&
                 quantityError == null
 
-    val canCreate: Boolean
-        get() = isFormValid && !isCreating
+    val canSave: Boolean
+        get() = isFormValid && !isSaving && !isDeleting
+
+    val canDelete: Boolean
+        get() = isEditMode && !isSaving && !isDeleting
 }

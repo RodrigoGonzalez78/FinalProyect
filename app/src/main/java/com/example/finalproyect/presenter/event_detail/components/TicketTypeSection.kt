@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.finalproyect.domain.model.TicketType
+import com.example.finalproyect.presenter.navigator.navigateToEditTicketType
 
 @Composable
 fun TicketTypesSection(
@@ -85,7 +86,13 @@ fun TicketTypesSection(
                     ticketType = ticketType,
                     canEdit = uiState.canManageTicketTypes,
                     onEdit = {
-
+                        uiState.eventDetail?.event?.let {
+                            navController.navigateToEditTicketType(
+                                uiState.eventDetail?.event?.id.toString()?:"",
+                                it.name,
+                                ticketType.id.toString()
+                            )
+                        }
                     }
                 )
             }

@@ -14,6 +14,8 @@ interface TicketTypeRepository {
 
     suspend fun getTicketTypesByEvent(eventId: Int): Result<List<TicketType>>
 
+    suspend fun getTicketTypeById(ticketTypeId: Int): Result<TicketType>
+
     suspend fun updateTicketType(
         eventId: Int,
         ticketTypeId: Int,

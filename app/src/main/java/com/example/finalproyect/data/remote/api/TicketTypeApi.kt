@@ -37,4 +37,9 @@ interface TicketTypeApi {
         @Path("eventId") eventId: Int,
         @Path("ticketId") ticketTypeId: Int
     ): Response<Unit>
+
+    @GET("tickets-types/{id}")
+    suspend fun getTicketTypeById(
+        @Path("id") ticketTypeId: Int
+    ): Response<TicketTypeDto>
 }
