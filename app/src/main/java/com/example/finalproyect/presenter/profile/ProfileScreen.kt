@@ -66,12 +66,10 @@ fun ProfileScreen(
     navController: NavHostController,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
 
-    // Estado del ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
-    // Snackbar
+
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.errorMessage, uiState.successMessage) {
         uiState.errorMessage?.let {
@@ -193,6 +191,8 @@ fun ProfileScreen(
             )
         }
     ) { paddingValues ->
+
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -363,21 +363,6 @@ private fun ProfileHeader(
             letterSpacing = 0.5.sp
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Indicador de estado
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ) {
-            Text(
-                text = "Perfil activo",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-            )
-        }
     }
 }
 
@@ -641,7 +626,6 @@ fun ProfileSection(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         tonalElevation = animatedElevation,
         shadowElevation = animatedElevation
     ) {
@@ -779,6 +763,7 @@ private fun EnhancedTextField(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+
                 supportingText != null -> {
                     Text(
                         text = supportingText,
