@@ -34,7 +34,7 @@ fun NotificationsSection(uiState: EventDetailUiState, viewModel: EventDetailsVie
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(uiState.notification) { notification ->
-                NotificationItem(notification = notification)
+                NotificationItem(notification = notification, onDelete = {viewModel.deleteNotification(notification.id)})
             }
         }
     }

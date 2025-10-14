@@ -34,9 +34,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 
-
 @Composable
-fun NotificationItem(notification: Notification, onDelete:() -> Unit = {}) {
+fun NotificationItem(notification: Notification, onDelete: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -91,17 +90,7 @@ fun NotificationItem(notification: Notification, onDelete:() -> Unit = {}) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Visibility,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
+
                 Row {
                     IconButton(
                         onClick = { onDelete() },

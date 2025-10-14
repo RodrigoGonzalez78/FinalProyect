@@ -11,6 +11,7 @@ import com.example.finalproyect.domain.model.TicketType
 import com.example.finalproyect.domain.usecase.event.DeleteEventUseCase
 import com.example.finalproyect.domain.usecase.event.EventDetailWithPermissions
 import com.example.finalproyect.domain.usecase.event.GetEventDetailUseCase
+import com.example.finalproyect.domain.usecase.notification.DeleteNotificationUseCase
 import com.example.finalproyect.domain.usecase.notification.GetNotificationsByEventUseCase
 import com.example.finalproyect.domain.usecase.organizers.CreateOrganizerUseCase
 import com.example.finalproyect.domain.usecase.organizers.DeleteOrganizerUseCase
@@ -24,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 @HiltViewModel
 class EventDetailsViewModel @Inject constructor(
     private val getEventDetailUseCase: GetEventDetailUseCase,
@@ -36,7 +36,8 @@ class EventDetailsViewModel @Inject constructor(
     private val updateOrganizerRoleUseCase: UpdateOrganizerRoleUseCase,
     private val deleteOrganizerUseCase: DeleteOrganizerUseCase,
     private val getUserTicketForEventUseCase: GetUserTicketForEventUseCase,
-    private val getNotificationsByEventUseCase: GetNotificationsByEventUseCase
+    private val getNotificationsByEventUseCase: GetNotificationsByEventUseCase,
+    private val deleteNotificationUseCase: DeleteNotificationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EventDetailUiState())
@@ -72,15 +73,14 @@ class EventDetailsViewModel @Inject constructor(
                             error = null
                         )
 
-
                         loadTicketTypes()
                         loadOrganizers()
                         loadUserTicket()
                         loadNotifications()
                     },
                     onFailure = { error ->
-                        Log.e("Varibles view",eventId)
-                        Log.e("Varibles view",error.message?:"")
+                        Log.e("Varibles view", eventId)
+                        Log.e("Varibles view", error.message ?: "")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = error.message ?: "Error desconocido"
@@ -123,15 +123,13 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-
-    private fun loadNotifications(){
-        Log.e("Carga","No cargar ################")
+    private fun loadNotifications() {
+        Log.e("Carga", "No cargar ################")
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingNotifications = true, notificationError = null)
 
             val result = getNotificationsByEventUseCase(currentEventId)
             result.fold(
-
                 onSuccess = { notificationsList ->
                     _uiState.value = _uiState.value.copy(
                         isLoadingNotifications = false,
@@ -139,14 +137,37 @@ class EventDetailsViewModel @Inject constructor(
                         notificationError = null
                     )
                 },
-
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoadingNotifications = false,
                         notificationError = error.message ?: "Error al cargar las notificaciones"
                     )
                 }
+            )
+        }
+    }
 
+    fun deleteNotification(notificationId: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDeletingNotification = true)
+
+            val result = deleteNotificationUseCase(notificationId)
+
+            result.fold(
+                onSuccess = {
+                    val updatedList = _uiState.value.notification.filter { it.id != notificationId }
+                    _uiState.value = _uiState.value.copy(
+                        isDeletingNotification = false,
+                        notification = updatedList,
+                        successMessage = "Notificación eliminada exitosamente"
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isDeletingNotification = false,
+                        error = error.message ?: "Error al eliminar notificación"
+                    )
+                }
             )
         }
     }
@@ -308,7 +329,6 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
-
     fun deleteEvent() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDeletingEvent = true)
@@ -347,8 +367,6 @@ class EventDetailsViewModel @Inject constructor(
     }
 }
 
-
-
 data class EventDetailUiState(
     // Estado general
     val isLoading: Boolean = false,
@@ -362,10 +380,10 @@ data class EventDetailUiState(
     val isLoadingTicketTypes: Boolean = false,
     val ticketTypesError: String? = null,
 
-    //Notificaciones
+    // Notificaciones
     val notification: List<Notification> = emptyList(),
     val isLoadingNotifications: Boolean = false,
-    val notificationError:String? = null,
+    val notificationError: String? = null,
 
     // Organizadores
     val organizers: List<Organizer> = emptyList(),
@@ -386,6 +404,7 @@ data class EventDetailUiState(
     val isDeletingOrganizer: Boolean = false,
     val isPurchasingTicket: Boolean = false,
     val isDeletingEvent: Boolean = false,
+    val isDeletingNotification: Boolean = false,
 
     // Mensajes de éxito
     val successMessage: String? = null
@@ -407,7 +426,6 @@ data class EventDetailUiState(
 
     val canDeleteEvent: Boolean
         get() = eventDetailWithPermissions?.canDeleteEvent == true
-
 
     val userOrganizerRole: Int?
         get() = eventDetailWithPermissions?.userOrganizerRole
