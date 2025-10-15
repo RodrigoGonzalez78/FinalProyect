@@ -3,6 +3,7 @@ package com.example.finalproyect.presenter.new_event
 
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.finalproyect.domain.model.Location
 import com.example.finalproyect.presenter.navigator.AppDestination
 import com.google.android.gms.maps.model.LatLng
 import java.text.SimpleDateFormat
@@ -46,27 +49,35 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
-
 @RequiresApi(Build.VERSION_CODES.O)
 @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION])
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewEventScreen(
     navController: NavHostController,
-    EventId:String?=null,
+    eventId: String? = null,
     viewModel: NewEventViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val locations by viewModel.locations.collectAsState()
     val context = LocalContext.current
+    val isEditMode = viewModel.isEditMode()
+
+    // Cargar evento si estamos en modo edición
+    LaunchedEffect(eventId) {
+        eventId?.let {
+            viewModel.loadEventForEdit(it)
+        }
+    }
 
     // Snackbar host
     val snackbarHostState = remember { SnackbarHostState() }
 
-
     // Efectos para mostrar mensajes
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
+            Log.e("Error",message)
+
             snackbarHostState.showSnackbar(message)
             viewModel.clearMessages()
         }
@@ -75,8 +86,9 @@ fun NewEventScreen(
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
+
             viewModel.clearMessages()
-            // Navegar de vuelta después de crear exitosamente
+            // Navegar de vuelta después de crear/actualizar exitosamente
             navController.navigate(AppDestination.Home) {
                 popUpTo(AppDestination.Home) { inclusive = true }
             }
@@ -107,15 +119,17 @@ fun NewEventScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Crear Nuevo Evento") },
+                title = {
+                    Text(if (isEditMode) "Editar Evento" else "Crear Nuevo Evento")
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate(AppDestination.Home) }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
                     IconButton(
-                        onClick = { viewModel.createEvent() },
+                        onClick = { viewModel.saveEvent() },
                         enabled = !uiState.isLoading
                     ) {
                         if (uiState.isLoading) {
@@ -151,7 +165,8 @@ fun NewEventScreen(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .border(
                         width = 1.dp,
-                        color = if (uiState.bannerUri == null) MaterialTheme.colorScheme.error
+                        color = if (uiState.bannerUri == null && uiState.existingBannerUrl == null)
+                            MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -164,6 +179,14 @@ fun NewEventScreen(
                     uiState.bannerUri != null -> {
                         AsyncImage(
                             model = uiState.bannerUri,
+                            contentDescription = "Banner del evento",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    uiState.existingBannerUrl != null -> {
+                        AsyncImage(
+                            model = uiState.existingBannerUrl,
                             contentDescription = "Banner del evento",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -204,7 +227,17 @@ fun NewEventScreen(
                     }
                 }
             }
-            if (uiState.bannerUri == null) {
+
+            // Mostrar indicador de cambio de imagen en modo edición
+            if (isEditMode && uiState.bannerUri != null) {
+                Text(
+                    text = "Nueva imagen seleccionada",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            if (uiState.bannerUri == null && uiState.existingBannerUrl == null) {
                 Text(
                     text = "El banner es obligatorio",
                     color = MaterialTheme.colorScheme.error,
@@ -259,7 +292,9 @@ fun NewEventScreen(
                 readOnly = true,
                 trailingIcon = {
                     Row {
-                        IconButton(onClick = { showLocationPicker = true }) { /* lista */ }
+                        IconButton(onClick = { showLocationPicker = true }) {
+                            Icon(Icons.Default.List, contentDescription = "Lista")
+                        }
                         IconButton(onClick = { showMapPicker = true }) {
                             Icon(Icons.Default.Map, contentDescription = "Mapa")
                         }
@@ -371,16 +406,17 @@ fun NewEventScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = { navController.navigate(AppDestination.Home) },
+                    onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f),
                     enabled = !uiState.isLoading
                 ) {
                     Text("Cancelar")
                 }
                 Button(
-                    onClick = { viewModel.createEvent() },
+                    onClick = { viewModel.saveEvent() },
                     modifier = Modifier.weight(1f),
-                    enabled = uiState.isFormValid() && !uiState.isLoading
+                    enabled = (if (isEditMode) uiState.isFormValidForEdit() else uiState.isFormValid())
+                            && !uiState.isLoading
                 ) {
                     if (uiState.isLoading) {
                         Row(
@@ -392,10 +428,10 @@ fun NewEventScreen(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Creando...")
+                            Text(if (isEditMode) "Actualizando..." else "Creando...")
                         }
                     } else {
-                        Text("Guardar")
+                        Text(if (isEditMode) "Actualizar" else "Guardar")
                     }
                 }
             }
@@ -434,12 +470,24 @@ fun NewEventScreen(
             DatePicker(state = datePickerState)
         }
     }
+
     if (showMapPicker) {
         MapLocationPickerDialog(
             initialPosition = userPos ?: LatLng(-27.467, -58.830),
             onDismissRequest = { showMapPicker = false },
             onLocationPicked = { loc ->
                 viewModel.onLocationSelected(loc)
+            }
+        )
+    }
+
+    if (showLocationPicker) {
+        LocationPickerDialog(
+            locations = locations,
+            onDismissRequest = { showLocationPicker = false },
+            onLocationSelected = { loc ->
+                viewModel.onLocationSelected(loc)
+                showLocationPicker = false
             }
         )
     }
@@ -580,7 +628,7 @@ fun LocationItem(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = location.address,
+                    text = location.direction,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

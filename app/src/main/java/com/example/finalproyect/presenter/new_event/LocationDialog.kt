@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.finalproyect.domain.model.Location
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -36,6 +37,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -221,13 +223,19 @@ fun MapLocationPickerDialog(
                     onLocationPicked(
                         Location(
                             name = locationName,
-                            address = if (locationName.contains("Error") || locationName.contains("desconocida")) {
+                            direction = if (locationName.contains("Error") || locationName.contains(
+                                    "desconocida"
+                                )
+                            ) {
                                 "(${lat.format(5)}, ${lng.format(5)})"
                             } else {
                                 locationName
                             },
                             latitude = lat,
-                            longitude = lng
+                            longitude = lng,
+                            id = 0,
+                            createdAt = LocalDateTime.now(),
+                            updatedAt = LocalDateTime.now()
                         )
                     )
                     onDismissRequest()

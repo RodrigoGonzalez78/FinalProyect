@@ -25,7 +25,6 @@ import com.example.finalproyect.presenter.scanner.ScannerScreen
 import com.example.finalproyect.presenter.ticket_detail.TicketDetailScreen
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 sealed interface AppDestination {
 
@@ -76,6 +75,11 @@ sealed interface AppDestination {
     ) : AppDestination
 
     @Serializable
+    data class EditEvent(
+        val eventId: String
+    ) : AppDestination
+
+    @Serializable
     data class Scanner(
         val eventId: Int,
         val eventName: String
@@ -105,6 +109,10 @@ fun NavHostController.navigateToCreateTicketType(eventId: String, eventName: Str
 
 fun NavHostController.navigateToEditTicketType(eventId: String, eventName: String, ticketTypeId: String) {
     navigate(AppDestination.CreateTicketType(eventId, eventName, ticketTypeId = ticketTypeId))
+}
+
+fun NavHostController.navigateToEditEvent(eventId: String) {
+    navigate(AppDestination.EditEvent(eventId))
 }
 
 fun NavHostController.navigateToScanner(eventId: Int, eventName: String) {
@@ -160,6 +168,14 @@ fun AppNavHost(
 
         composable<AppDestination.NewEvent> {
             NewEventScreen(navController)
+        }
+
+        composable<AppDestination.EditEvent> { backStackEntry ->
+            val editEvent: AppDestination.EditEvent = backStackEntry.toRoute()
+            NewEventScreen(
+                navController = navController,
+                eventId = editEvent.eventId
+            )
         }
 
         composable<AppDestination.Profile> {
@@ -225,5 +241,3 @@ fun AppNavHost(
         }
     }
 }
-
-

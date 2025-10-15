@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.finalproyect.presenter.event_detail.EventDetailUiState
 import com.example.finalproyect.presenter.navigator.AppDestination
+import com.example.finalproyect.presenter.navigator.navigateToCreateNotification
+import com.example.finalproyect.presenter.navigator.navigateToEditEvent
 
 
 @Composable
@@ -135,13 +137,18 @@ fun EventOverviewSection(
                         QuickActionButton(
                             icon = Icons.Outlined.NotificationsActive,
                             text = "Enviar aviso",
-                            onClick = { /* Mostrar diálogo de aviso */ }
+                            onClick = {
+                                navController.navigateToCreateNotification(
+                                    uiState.eventDetail!!.event.id.toString(),
+                                    uiState.eventDetail!!.event.name
+                                )
+                            }
                         )
 
                         QuickActionButton(
                             icon = Icons.Outlined.Edit,
                             text = "Editar evento",
-                            onClick = { /* Navegar a edición */ }
+                            onClick = {navController.navigateToEditEvent(uiState.eventDetail!!.event.id.toString()) }
                         )
                     }
                 }
